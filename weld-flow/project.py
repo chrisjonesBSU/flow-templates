@@ -63,10 +63,16 @@ def sim_done(job):
 def sample_done(job):
     return job.doc.sample_done
 
+def get_slab_file(job, file_name):
+
+    os.path.join(job.path, "..", "..", "slab-files"
+
 
 @MyProject.post(sim_done)
-@MyProject.operation(directives={"ngpu": 1, "executable": "python -u"})
-def run_simulation(job):
+@MyProject.operation(
+        directives={"ngpu": 1, "executable": "python -u"}, name="weld"
+)
+def run_weld(job):
     # Add package imports here
     with job:
         print("JOB ID NUMBER:")
@@ -77,7 +83,9 @@ def run_simulation(job):
 
 @MyProject.pre(sim_done)
 @MyProject.post(sample_done)
-@MyProject.operation(directives={"ngpu": 1, "executable": "python -u"})
+@MyProject.operation(
+        directives={"ngpu": 1, "executable": "python -u"}, name="weld"
+)
 def sample(job):
     # Add package imports here
     with job:
