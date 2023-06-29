@@ -21,13 +21,23 @@ from itertools import product
 def get_parameters():
     ''''''
     parameters = OrderedDict()
-
-    # Define parameters here
-    # Example:
     parameters["molecule"] = ["PPS"]
-    parameters["num_molecules"] = [20]
-    parameters["kT"] = [1.4]
-    parameters["n_steps"] = [5e6]
+    parameters["forcefield"] = ["pps_opls"]
+    parameters["num_mols"] = [20]
+    parameters["lengths"] = [20]
+    parameters["density"] = [1.2]
+    parameters["remove_hydrogens"] = [True]
+    parameters["remove_charges"] = [True]
+    parameters["kT"] = [5.0]
+    parameters["n_steps"] = [5e8]
+    parameters["shrink_kT"] = [8.0]
+    parameters["shrink_n_steps"] = [5e7]
+    parameters["shrink_period"] = [10000]
+    parameters["r_cut"] = [2.5]
+    parameters["dt"] = [0.0003]
+    parameters["tau_kT"] = [100]
+    parameters["gsd_write_freq"] = [1e4]
+    parameters["log_write_freq"] = [1e3]
     return list(parameters.keys()), list(product(*parameters.values()))
 
 

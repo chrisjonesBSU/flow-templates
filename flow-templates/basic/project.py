@@ -66,8 +66,7 @@ def sample_done(job):
 
 @MyProject.post(sim_done)
 @MyProject.operation(
-        directives={"ngpu": 1, "executable": "python -u"},
-        name="simulate"
+        directives={"ngpu": 1, "executable": "python -u"}, name="simulate"
 )
 def run_simulation(job):
     # Add package imports here
@@ -81,8 +80,7 @@ def run_simulation(job):
 @MyProject.pre(sim_done)
 @MyProject.post(sample_done)
 @MyProject.operation(
-        directives={"ngpu": 1, "executable": "python -u"},
-        name="sample"
+        directives={"ngpu": 1, "executable": "python -u"}, name="sample"
 )
 def sample(job):
     # Add package imports here
