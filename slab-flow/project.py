@@ -105,16 +105,7 @@ def run_sim(job):
         sim.reference_length = system.reference_length
         sim.reference_energy = system.reference_energy
         sim.reference_mass = system.reference_mass
-
-        # Add wall forces
-        sim.add_walls(wall_axis=(1,0,0), sigma=1.0, epsilon=1.0, r_cut=2.5)
-
-        target_box = system.target_box * system.reference_distance.to("angstrom").value()
-        shrink_kT_ramp = sim.kT_ramp(
-                n_steps=job.sp.shrink_n_steps,
-                kT_start=job.sp.shrink_kT,
-                kT_final=job.sp.kT
-        )
+        # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT 
         job.doc.tau_kT = tau_kT
         job.doc.target_box = target_box
@@ -128,8 +119,16 @@ def run_sim(job):
         job.doc.real_time_units = "fs"
         job.doc.simulation_time = job.doc.real_time_step * job.sp.n_steps
         job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
-        
+        # Add wall forces
+        sim.add_walls(wall_axis=(1,0,0), sigma=1.0, epsilon=1.0, r_cut=2.5)
+        # Set up stuff for shrinking volume step 
         print("Running shrink step...")
+        target_box = system.target_box * system.reference_distance.to("angstrom").value()
+        shrink_kT_ramp = sim.kT_ramp(
+                n_steps=job.sp.shrink_n_steps,
+                kT_start=job.sp.shrink_kT,
+                kT_final=job.sp.kT
+        )
         sim.run_update_volume(
                 final_box=target_box,
                 n_steps=job.sp.shrink_n_steps,
@@ -139,6 +138,7 @@ def run_sim(job):
         )
         print("Shrink step finished...")
         print("Running simulation")
+        sim.run_NVT(kT=job.sp.kT, n_steps=job.sp.n_steps, tau_kt=tau_kT)
                 
 
 
