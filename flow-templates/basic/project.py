@@ -53,6 +53,20 @@ class Fry(DefaultSlurmEnvironment):
             help="Specify the partition to submit to."
         )
 
+
+class Falcon(DefaultSlurmEnvironment):
+    hostname_pattern = "ondemand"
+    template = "falcon.sh"
+
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument(
+            "--partition",
+            default="batch",
+            help="Specify the partition to submit to."
+        )
+
+
 # Definition of project-related labels (classification)
 @MyProject.label
 def sim_done(job):
