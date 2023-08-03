@@ -80,24 +80,21 @@ def run_sim(job):
         for m in job.sp.molecules:
             mol_cls = getattr(hoomd_polymers.library.polymers, job.sp.molecule)
             mol_obj = mol_cls(
-                    num_moles=job.sp.num_mols,
-                    lengths=job.sp.lengths,
-                    force_field=job.sp.forcefield
-            )
+                        num_moles=job.sp.num_mols,
+                        lengths=job.sp.lengths,
+                        force_field=job.sp.forcefield
+                    )
             mol_obj_list.append(mol_obj)
 
         system = Pack(
-                molecules=mol_obj_list,
-                density=job.sp.density,
-                r_cut=job.sp.r_cut,
-                auto_scale=True
-        ) 
+                    molecules=mol_obj_list,
+                    density=job.sp.density,
+                    r_cut=job.sp.r_cut,
+                    auto_scale=True,
+                    remove_hydrogens=job.sp.remove_hydrogens,
+                    remove_charges=job.sp.remove_charges
+                ) 
 
-        if job.sp.remove_hydrogens:
-            system.remove_hydrogens()
-        if job.sp.remove_charges:
-            system.remove_charges()
-        
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
         sim = Simulation(
