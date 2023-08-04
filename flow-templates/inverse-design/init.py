@@ -27,7 +27,7 @@ def get_parameters():
     parameters["num_mols"] = [20]
     parameters["bead_mass"] = [{"A": 100}]
     parameters["bond_lengths"] = [{"A-A": 1.0}]
-    parameters["density"] = [1.2]
+    parameters["density"] = [0.8, 1.0, 1.2]
     parameters["ref_length"] = [dict(value=1, units="nm"]
     parameters["ref_energy"] = [dict(value=1, units="kJ"]
     parameters["ref_mass"] = [dict(value=450, units="amu"]
@@ -43,15 +43,15 @@ def get_parameters():
     parameters["exclusions"] = ["bond", "1-3"]
 
     # Simulation Details:
-    parameters["kT"] = [5.0]
-    parameters["n_steps"] = [5e8]
+    parameters["kT"] = [0.5, 1.0, 3.0, 5.0, 7.0]
+    parameters["n_steps"] = [5e7]
     parameters["shrink_kT"] = [8.0]
-    parameters["shrink_n_steps"] = [5e7]
+    parameters["shrink_n_steps"] = [1e7]
     parameters["shrink_period"] = [10000]
-    parameters["dt"] = [0.0003]
+    parameters["dt"] = [0.0005]
     parameters["tau_kT"] = [100]
-    parameters["gsd_write_freq"] = [1e4]
-    parameters["log_write_freq"] = [1e3]
+    parameters["gsd_write_freq"] = [1e5]
+    parameters["log_write_freq"] = [1e4]
     return list(parameters.keys()), list(product(*parameters.values()))
 
 

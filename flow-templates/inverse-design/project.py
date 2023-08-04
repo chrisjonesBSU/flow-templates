@@ -150,22 +150,32 @@ def run_sim(job):
                 log_write_freq=job.sp.log_write_freq,
                 log_file_name=log_path,
         )
+        sim.add_walls(wall_axis=(1,0,0), sigma=1, epsilon=1, r_cut=1.2)
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
         sim.reference_length = ref_units[0] 
         sim.reference_energy =  ref_units[1] 
         sim.reference_mass = ref_units[2] 
-        # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT 
+        target_box = (system.target_box /
+                system.reference_distance.to("angstrom").value()
+        )
+        # Store other sim information in job doc
+        job.doc.wall_axis = (1,0,0)
+        job.doc.wall_sigma = 1.0
+        job.doc.wall_epsilon= 1.0
+        job.doc.wall_r_cut = 1.2
         job.doc.tau_kT = tau_kT
         job.doc.target_box = target_box
+        # Add time related job doc info
         job.doc.real_time_step = sim.real_timestep.to("fs").value()
         job.doc.real_time_units = "fs"
         job.doc.n_steps = job.sp.n_steps
         job.doc.simulation_time = job.doc.real_time_step * job.doc.n_steps
+        job.doc.gsd_step_time = job.doc.real_time_step * job.sp.gsd_write_freq
+        job.doc.log_step_time = job.doc.real_time_step * job.sp.log_write_freq
         job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
         # Set up stuff for shrinking volume step 
         print("Running shrink step.")
-        target_box = system.target_box / system.reference_distance.to("angstrom").value()
         shrink_kT_ramp = sim.kT_ramp(
                 n_steps=job.sp.shrink_n_steps,
                 kT_start=job.sp.shrink_kT,
