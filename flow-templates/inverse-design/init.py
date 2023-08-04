@@ -28,10 +28,9 @@ def get_parameters():
     parameters["bead_mass"] = [{"A": 100}]
     parameters["bond_lengths"] = [{"A-A": 1.0}]
     parameters["density"] = [0.8, 1.0, 1.2]
-    parameters["ref_length"] = [dict(value=1, units="nm"]
-    parameters["ref_energy"] = [dict(value=1, units="kJ"]
-    parameters["ref_mass"] = [dict(value=450, units="amu"]
-    
+    parameters["ref_length"] = [dict(value=1, units="nm")]
+    parameters["ref_energy"] = [dict(value=1, units="kJ")]
+    parameters["ref_mass"] = [dict(value=450, units="amu")]
     # Forcefield Details:
     parameters["pair_forces"] = [{"A": {"sigma": 1.0, "epsilon": 1.0}}]
     parameters["bond_forces"] = [{"A-A": {"r0": 1.0, "k": 500}}]
