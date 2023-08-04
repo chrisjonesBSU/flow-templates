@@ -31,6 +31,7 @@ def get_parameters():
     parameters["ref_length"] = [dict(value=1, units="nm")]
     parameters["ref_energy"] = [dict(value=1, units="kJ")]
     parameters["ref_mass"] = [dict(value=450, units="amu")]
+    parameters["packing_expand_factor"] = [8]
     # Forcefield Details:
     parameters["pair_forces"] = [{"A": {"sigma": 1.0, "epsilon": 1.0}}]
     parameters["bond_forces"] = [{"A-A": {"r0": 1.0, "k": 500}}]

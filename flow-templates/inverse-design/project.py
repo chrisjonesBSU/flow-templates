@@ -5,10 +5,18 @@ status, execute operations and submit them to a cluster. See also:
 
     $ python src/project.py --help
 """
+import os
+
 import signac
 from flow import FlowProject, directives
 from flow.environment import DefaultSlurmEnvironment
-import os
+
+import hoomd_polymers
+from hoomd_polymers.base.system import Pack
+from hoomd_polymers.base.simulation import Simulation
+from hoomd_polymers.library.polymers import LJChain
+from hoomd_polymers.library.ff_classes import BeadSpring
+import unyt
 
 
 class MyProject(FlowProject):
@@ -66,7 +74,7 @@ def sample_done(job):
 
 def build_system(job):
     lj_chains = LJChain(
-            n_mols=job.sp.n_mols,
+            num_mols=job.sp.num_mols,
             lengths=job.sp.chain_lengths,
             bead_sequence=job.sp.bead_sequence,
             bead_mass=job.sp.bead_mass,
@@ -97,30 +105,30 @@ def build_system(job):
     system.reference_mass = ref_mass
 
 	# Set up Forcefield:
-	beads = dict()
-	bonds = dict()
-	angles = dict()
-	dihedrals = dict()
+    beads = dict()
+    bonds = dict()
+    angles = dict()
+    dihedrals = dict()
 
-	for bead in job.sp.bead_types[0]:
-		beads[bead] = job.sp.bead_types[0][bead]
+    for bead in job.sp.bead_types[0]:
+        beads[bead] = job.sp.bead_types[0][bead]
 
-	for bond in job.sp.bond_types[0]:
-		bonds[bond] = job.sp.bond_types[0][bond]
+    for bond in job.sp.bond_types[0]:
+        bonds[bond] = job.sp.bond_types[0][bond]
 
-	for angle in job.sp.angle_types[0]:
-		angles[angle] = job.sp.angle_types[0][angle]
+    for angle in job.sp.angle_types[0]:
+        angles[angle] = job.sp.angle_types[0][angle]
 
-	for dih in job.sp.dihedral_types[0]:
-		dihedrals[dih] = job.sp.dihedral_types[0][dih]
+    for dih in job.sp.dihedral_types[0]:
+        dihedrals[dih] = job.sp.dihedral_types[0][dih]
 
-	bead_spring_ff = BeadSpring(
-			beads=beads,
-			bonds=bonds,
-			angles=angles,
-			dihedrals=dihedrals,
-			r_cut=job.sp.r_cut
-	)
+    bead_spring_ff = BeadSpring(
+            beads=beads,
+            bonds=bonds,
+            angles=angles,
+            dihedrals=dihedrals,
+            r_cut=job.sp.r_cut
+    )
 
     hoomd_ff = bead_spring_ff.hoomd_forcefield
     snapshot = system.hoomd_snapshot
@@ -133,11 +141,8 @@ def build_system(job):
         directives={"ngpu": 1, "executable": "python -u"}, name="simulation"
 )
 def run_sim(job):
-    import hoomd_polymers
-    from hoomd_polymers.base.system import Pack
-    from hoomd_polymers.base.simulation import Simulaton 
     with job:
-        snapshot, hoomd_ff, ref_units = build_system(job) 
+        snapshot, hoomd_ff, ref_units = build_system(job)
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
         sim = Simulation(
@@ -152,10 +157,10 @@ def run_sim(job):
         )
         sim.add_walls(wall_axis=(1,0,0), sigma=1, epsilon=1, r_cut=1.2)
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
-        sim.reference_length = ref_units[0] 
-        sim.reference_energy =  ref_units[1] 
-        sim.reference_mass = ref_units[2] 
-        tau_kT = sim.dt * job.sp.tau_kT 
+        sim.reference_length = ref_units[0]
+        sim.reference_energy =  ref_units[1]
+        sim.reference_mass = ref_units[2]
+        tau_kT = sim.dt * job.sp.tau_kT
         target_box = (system.target_box /
                 system.reference_distance.to("angstrom").value()
         )
@@ -174,7 +179,7 @@ def run_sim(job):
         job.doc.gsd_step_time = job.doc.real_time_step * job.sp.gsd_write_freq
         job.doc.log_step_time = job.doc.real_time_step * job.sp.log_write_freq
         job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
-        # Set up stuff for shrinking volume step 
+        # Set up stuff for shrinking volume step
         print("Running shrink step.")
         shrink_kT_ramp = sim.kT_ramp(
                 n_steps=job.sp.shrink_n_steps,
