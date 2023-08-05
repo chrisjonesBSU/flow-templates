@@ -25,13 +25,14 @@ def get_parameters():
     parameters["bead_sequence"] = [["A"]]
     parameters["chain_lengths"] = [20]
     parameters["num_mols"] = [20]
-    parameters["bead_mass"] = [{"A": 100}]
+    parameters["bead_mass"] = [{"A": 450}]
     parameters["bond_lengths"] = [{"A-A": 1.0}]
     parameters["density"] = [1.0]
     parameters["ref_length"] = [dict(value=1, units="nm")]
     parameters["ref_energy"] = [dict(value=1, units="kJ")]
-    parameters["ref_mass"] = [dict(value=450, units="amu")]
+    parameters["ref_mass"] = [dict(value=1, units="amu")]
     parameters["packing_expand_factor"] = [8]
+    parameters["packing_edge"] = [0.5]
     # Forcefield Details:
     parameters["pair_forces"] = [{"A": {"sigma": 1.0, "epsilon": 1.0}}]
     parameters["bond_forces"] = [{"A-A": {"r0": 1.0, "k": 500}}]
@@ -40,7 +41,7 @@ def get_parameters():
             {"A-A-A-A": {"phi0": 1.0, "k": 100, "n": 1, "d": -1}}
     ]
     parameters["r_cut"] = [2.5]
-    parameters["exclusions"] = ["bond", "1-3"]
+    parameters["exclusions"] = [["bond", "1-3"]]
 
     # Simulation Details:
     parameters["kT"] = [5.0]

@@ -87,7 +87,6 @@ def build_system(job):
             r_cut=job.sp.r_cut,
             packing_expand_factor=job.sp.packing_expand_factor,
             edge=job.sp.packing_edge,
-            overlap=job.sp.packing_overlap,
     )
 
     length_units = getattr(unyt, job.sp.ref_length["units"])
