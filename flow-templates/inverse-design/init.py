@@ -54,7 +54,7 @@ def get_parameters():
     parameters["n_steps"] = [5e7]
     parameters["shrink_kT"] = [8.0]
     parameters["shrink_n_steps"] = [1e7]
-    parameters["shrink_period"] = [10000]
+    parameters["shrink_period"] = [500]
     parameters["dt"] = [0.0005]
     parameters["tau_kT"] = [100]
     parameters["gsd_write_freq"] = [1e5]
