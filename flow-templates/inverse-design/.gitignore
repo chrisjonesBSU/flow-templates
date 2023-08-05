@@ -1,2 +1,5 @@
 workspace/
+log-files/
 .signac
+*.out*
+signac_project_document.json
