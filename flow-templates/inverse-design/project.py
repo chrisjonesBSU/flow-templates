@@ -189,13 +189,13 @@ def run_sim(job):
         job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
-        shrink_kT_ramp = sim.kT_ramp(
+        shrink_kT_ramp = sim.temperature_ramp(
                 n_steps=job.sp.shrink_n_steps,
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
         )
         sim.run_update_volume(
-                final_box=target_box,
+                final_box_lengths=target_box,
                 n_steps=job.sp.shrink_n_steps,
                 period=job.sp.shrink_period,
                 tau_kt=tau_kT,
