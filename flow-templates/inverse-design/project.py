@@ -100,8 +100,11 @@ def build_system(job):
     job.doc.ref_energy = ref_energy
     job.doc.ref_mass = ref_mass
     system.reference_length = ref_length
-    system.reference_energy = ref_ref_energy
+    system.reference_energy = ref_energy
     system.reference_mass = ref_mass
+    print("------------")
+    print(system._reference_values)
+    print("------------")
 
 	# Set up Forcefield:
     beads = dict()
@@ -131,8 +134,13 @@ def build_system(job):
 
     hoomd_ff = bead_spring_ff.hoomd_forcefield
     snapshot = system.hoomd_snapshot
-    ref_units = (system.ref_distance, system.ref_energy, system.ref_mass)
-    return snapshot, hoomd_ff, ref_units
+    ref_units = (
+            system.reference_length,
+            system.reference_energy,
+            system.reference_mass
+    )
+    #return snapshot, hoomd_ff, ref_units
+    return system, hoomd_ff, ref_units
 
 
 @MyProject.post(sim_done)
@@ -141,11 +149,12 @@ def build_system(job):
 )
 def run_sim(job):
     with job:
-        snapshot, hoomd_ff, ref_units = build_system(job)
+        #snapshot, hoomd_ff, ref_units = build_system(job)
+        system, hoomd_ff, ref_units = build_system(job)
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
         sim = Simulation(
-                initial_state=snapshot,
+                initial_state=system.hoomd_snapshot,
                 forcefield=hoomd_ff,
                 dt=job.sp.dt,
                 r_cut=job.sp.r_cut,
@@ -161,7 +170,7 @@ def run_sim(job):
         sim.reference_mass = ref_units[2]
         tau_kT = sim.dt * job.sp.tau_kT
         target_box = (system.target_box /
-                system.reference_distance.to("angstrom").value()
+                system.reference_length.to("angstrom").value
         )
         # Store other sim information in job doc
         job.doc.wall_axis = (1,0,0)
@@ -171,7 +180,7 @@ def run_sim(job):
         job.doc.tau_kT = tau_kT
         job.doc.target_box = target_box
         # Add time related job doc info
-        job.doc.real_time_step = sim.real_timestep.to("fs").value()
+        job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
         job.doc.n_steps = job.sp.n_steps
         job.doc.simulation_time = job.doc.real_time_step * job.doc.n_steps

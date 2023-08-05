@@ -34,11 +34,17 @@ def get_parameters():
     parameters["packing_expand_factor"] = [8]
     parameters["packing_edge"] = [0.5]
     # Forcefield Details:
-    parameters["pair_forces"] = [{"A": {"sigma": 1.0, "epsilon": 1.0}}]
-    parameters["bond_forces"] = [{"A-A": {"r0": 1.0, "k": 500}}]
-    parameters["angle_forces"] = [{"A-A-A": {"t0": 1.0, "k": 100}}]
-    parameters["dihedral_forces"] = [
-            {"A-A-A-A": {"phi0": 1.0, "k": 100, "n": 1, "d": -1}}
+    parameters["bead_types"] = [
+            [{"A": {"sigma": 1.0, "epsilon": 1.0}}]
+    ]
+    parameters["bond_types"] = [
+            [{"A-A": {"r0": 1.0, "k": 500}}]
+    ]
+    parameters["angle_types"] = [
+            [{"A-A-A": {"t0": 1.0, "k": 100}}]
+    ]
+    parameters["dihedral_types"] = [
+            [{"A-A-A-A": {"phi0": 1.0, "k": 100, "n": 1, "d": -1}}]
     ]
     parameters["r_cut"] = [2.5]
     parameters["exclusions"] = [["bond", "1-3"]]
