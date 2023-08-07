@@ -107,22 +107,17 @@ def build_system(job):
     print("------------")
 
 	# Set up Forcefield:
-    beads = dict()
-    bonds = dict()
-    angles = dict()
-    dihedrals = dict()
-
-    for bead in job.sp.bead_types[0]:
-        beads[bead] = job.sp.bead_types[0][bead]
-
-    for bond in job.sp.bond_types[0]:
-        bonds[bond] = job.sp.bond_types[0][bond]
-
-    for angle in job.sp.angle_types[0]:
-        angles[angle] = job.sp.angle_types[0][angle]
-
-    for dih in job.sp.dihedral_types[0]:
-        dihedrals[dih] = job.sp.dihedral_types[0][dih]
+    beads = {"A": dict(epsilon=job.sp.epsilon, sigma=job.sp.sigma)}
+    bonds = {"A-A": dict(r0=job.sp.bond_r0, k=job.sp.bond_k)}
+    angles = {"A-A-A": dict(t0=job.sp.angle_t0, k=job.sp.angle_k)}
+    dihedrals = {
+            "A-A-A-A": dict(
+                phi0=job.sp.dihedral_phi0,
+                k=job.sp.dihedral_k,
+                d=-1,
+                n=1
+            )
+    }
 
     bead_spring_ff = BeadSpring(
             beads=beads,
@@ -149,11 +144,6 @@ def build_system(job):
 )
 def run_sim(job):
     with job:
-        # Set some useful job doc values from state points
-        job.doc.dihedral_k = job.sp.dihedral_types[0]["A-A-A-A"]["k"]
-        job.doc.dihedral_phi0 = job.sp.dihedral_types[0]["A-A-A-A"]["phi0"]
-        job.doc.angle_k = job.sp.angle_types[0]["A-A-A"]["k"]
-        job.doc.angle_t0 = job.sp.angle_types[0]["A-A-A"]["t0"]
         # Create initial config, set up simulation
         system, hoomd_ff, ref_units = build_system(job)
         gsd_path = job.fn("trajectory.gsd")

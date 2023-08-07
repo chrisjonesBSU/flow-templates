@@ -34,31 +34,18 @@ def get_parameters():
     parameters["packing_expand_factor"] = [8]
     parameters["packing_edge"] = [0.5]
     # Forcefield Details:
-    parameters["bead_types"] = [
-            [{"A": {"sigma": 1.0, "epsilon": 1.0}}]
-    ]
-    parameters["bond_types"] = [
-            [{"A-A": {"r0": 1.0, "k": 500}}]
-    ]
-    parameters["angle_types"] = [
-            [{"A-A-A": {"t0": 1.0, "k": 200}}],
-            [{"A-A-A": {"t0": 1.2, "k": 200}}],
-            [{"A-A-A": {"t0": 1.4, "k": 200}}],
-            [{"A-A-A": {"t0": 1.6, "k": 200}}],
-            [{"A-A-A": {"t0": 1.8, "k": 200}}],
-            [{"A-A-A": {"t0": 2.0, "k": 200}}],
-            [{"A-A-A": {"t0": 2.2, "k": 200}}],
-            [{"A-A-A": {"t0": 2.4, "k": 200}}],
-            [{"A-A-A": {"t0": 2.6, "k": 200}}],
-            [{"A-A-A": {"t0": 2.8, "k": 200}}],
-            [{"A-A-A": {"t0": 3.0, "k": 200}}],
-    ]
-    parameters["dihedral_types"] = [
-            [{"A-A-A-A": {"phi0": 0.0, "k": 5, "n": 1, "d": -1}}],
-            [{"A-A-A-A": {"phi0": 0.0, "k": 25, "n": 1, "d": -1}}],
-            [{"A-A-A-A": {"phi0": 0.0, "k": 50, "n": 1, "d": -1}}],
-            [{"A-A-A-A": {"phi0": 0.0, "k": 75, "n": 1, "d": -1}}],
-    ]
+    parameters["sigma"] = [1.0]
+    parameters["epsilon"] = [1.0]
+    # Bonds
+    parameters["bond_k"] = [500]
+    parameters["bond_r0"] = [1.1]
+    # Angles
+    parameters["angle_k"] = [200, 300]
+    parameters["angle_t0"] = [1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
+    # Dihedrals
+    parameters["dihedral_k"] = [5, 50, 100]
+    parameters["dihedral_phi0"] = [0.0]
+    # Other
     parameters["r_cut"] = [2.5]
     parameters["exclusions"] = [["bond", "1-3"]]
 
