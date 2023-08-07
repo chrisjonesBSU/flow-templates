@@ -218,8 +218,19 @@ def sample(job):
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
+        print("JOB TYPE: SAMPLE")
         print("------------------------------------")
-        # Add your script here
+        lp_mean, lp_std = persistence_length(
+                job.fn("trajectory.gsd"),
+                select_atoms_arg=job.sp.bead_sequence,
+                window_size=50,
+                start=-1000,
+                stop=-1
+        )
+        job.doc.lp_mean = lp_mean
+        job.doc.lp_std = lp_std
+
+        print("Sampling finished.")
 
 
 if __name__ == "__main__":
