@@ -170,7 +170,7 @@ def run_sim(job):
         sim.reference_mass = ref_units[2]
         tau_kT = sim.dt * job.sp.tau_kT
         target_box = (system.target_box /
-                system.reference_length.to("angstrom").value
+                system.reference_length.value
         )
         # Store other sim information in job doc
         job.doc.wall_axis = (1,0,0)

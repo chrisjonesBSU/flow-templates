@@ -23,14 +23,14 @@ def get_parameters():
     # System Details:
     parameters = OrderedDict()
     parameters["bead_sequence"] = [["A"]]
-    parameters["chain_lengths"] = [20]
-    parameters["num_mols"] = [20]
+    parameters["chain_lengths"] = [30]
+    parameters["num_mols"] = [50]
     parameters["bead_mass"] = [{"A": 450}]
     parameters["bond_lengths"] = [{"A-A": 1.0}]
-    parameters["density"] = [1.0]
+    parameters["density"] = [0.5]
     parameters["ref_length"] = [dict(value=1, units="nm")]
     parameters["ref_energy"] = [dict(value=1, units="kJ")]
-    parameters["ref_mass"] = [dict(value=1, units="amu")]
+    parameters["ref_mass"] = [dict(value=450, units="amu")]
     parameters["packing_expand_factor"] = [8]
     parameters["packing_edge"] = [0.5]
     # Forcefield Details:
