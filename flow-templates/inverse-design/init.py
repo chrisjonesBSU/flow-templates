@@ -23,7 +23,7 @@ def get_parameters():
     # System Details:
     parameters = OrderedDict()
     parameters["bead_sequence"] = [["A"]]
-    parameters["chain_lengths"] = [30]
+    parameters["chain_lengths"] = [60]
     parameters["num_mols"] = [1]
     parameters["bead_mass"] = [{"A": 450}]
     parameters["bond_lengths"] = [{"A-A": 1.0}]
@@ -41,7 +41,7 @@ def get_parameters():
             [{"A-A": {"r0": 1.0, "k": 500}}]
     ]
     parameters["angle_types"] = [
-            [{"A-A-A": {"t0": 1.0, "k": 220}}],
+            [{"A-A-A": {"t0": 1.0, "k": 200}}],
             [{"A-A-A": {"t0": 1.2, "k": 200}}],
             [{"A-A-A": {"t0": 1.4, "k": 200}}],
             [{"A-A-A": {"t0": 1.6, "k": 200}}],
@@ -54,22 +54,24 @@ def get_parameters():
             [{"A-A-A": {"t0": 3.0, "k": 200}}],
     ]
     parameters["dihedral_types"] = [
+            [{"A-A-A-A": {"phi0": 0.0, "k": 5, "n": 1, "d": -1}}],
+            [{"A-A-A-A": {"phi0": 0.0, "k": 25, "n": 1, "d": -1}}],
             [{"A-A-A-A": {"phi0": 0.0, "k": 50, "n": 1, "d": -1}}],
-            [{"A-A-A-A": {"phi0": 0.0, "k": 100, "n": 1, "d": -1}}],
+            [{"A-A-A-A": {"phi0": 0.0, "k": 75, "n": 1, "d": -1}}],
     ]
     parameters["r_cut"] = [2.5]
     parameters["exclusions"] = [["bond", "1-3"]]
 
     # Simulation Details:
     parameters["kT"] = [8.0]
-    parameters["n_steps"] = [5e7]
+    parameters["n_steps"] = [2e7]
     parameters["shrink_kT"] = [8.0]
     parameters["shrink_n_steps"] = [0]
     parameters["shrink_period"] = [1]
-    parameters["dt"] = [0.0005]
+    parameters["dt"] = [0.0003]
     parameters["tau_kT"] = [100]
-    parameters["gsd_write_freq"] = [1e5]
-    parameters["log_write_freq"] = [1e4]
+    parameters["gsd_write_freq"] = [1e4]
+    parameters["log_write_freq"] = [1e3]
     return list(parameters.keys()), list(product(*parameters.values()))
 
 

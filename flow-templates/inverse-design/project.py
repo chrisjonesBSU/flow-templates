@@ -149,7 +149,12 @@ def build_system(job):
 )
 def run_sim(job):
     with job:
-        #snapshot, hoomd_ff, ref_units = build_system(job)
+        # Set some useful job doc values from state points
+        job.doc.dihedral_k = job.sp.dihedral_types[0]["A-A-A-A"]["k"]
+        job.doc.dihedral_phi0 = job.sp.dihedral_types[0]["A-A-A-A"]["phi0"]
+        job.doc.angle_k = job.sp.angle_types[0]["A-A-A"]["k"]
+        job.doc.angle_t0 = job.sp.angle_types[0]["A-A-A"]["t0"]
+        # Create initial config, set up simulation
         system, hoomd_ff, ref_units = build_system(job)
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
@@ -188,24 +193,27 @@ def run_sim(job):
         job.doc.log_step_time = job.doc.real_time_step * job.sp.log_write_freq
         job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
         # Set up stuff for shrinking volume step
-        print("Running shrink step.")
-        shrink_kT_ramp = sim.temperature_ramp(
-                n_steps=job.sp.shrink_n_steps,
-                kT_start=job.sp.shrink_kT,
-                kT_final=job.sp.kT
-        )
-        sim.run_update_volume(
-                final_box_lengths=target_box,
-                n_steps=job.sp.shrink_n_steps,
-                period=job.sp.shrink_period,
-                tau_kt=tau_kT,
-                kT=shrink_kT_ramp
-        )
-        print("Shrink step finished.")
+        sim.save_restart_gsd(job.fn("init.gsd"))
+        if job.sp.shrink_n_steps > 0:
+            print("Running shrink step.")
+            shrink_kT_ramp = sim.temperature_ramp(
+                    n_steps=job.sp.shrink_n_steps,
+                    kT_start=job.sp.shrink_kT,
+                    kT_final=job.sp.kT
+            )
+            sim.run_update_volume(
+                    final_box_lengths=target_box,
+                    n_steps=job.sp.shrink_n_steps,
+                    period=job.sp.shrink_period,
+                    tau_kt=tau_kT,
+                    kT=shrink_kT_ramp
+            )
+            print("Shrink step finished.")
         print("Running simulation.")
         sim.run_NVT(kT=job.sp.kT, n_steps=job.sp.n_steps, tau_kt=tau_kT)
         sim.save_restart_gsd(job.fn("restart.gsd"))
         print("Simulation finished.")
+        job.doc.sim_done = True
 
 
 @MyProject.pre(sim_done)
@@ -214,23 +222,24 @@ def run_sim(job):
         directives={"ngpu": 1, "executable": "python -u"}, name="sample"
 )
 def sample(job):
-    # Add package imports here
+    from cmeutils.polymers import persistence_length
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
         print("JOB TYPE: SAMPLE")
         print("------------------------------------")
+        select_atoms_arg = " ".join(job.sp.bead_sequence)
         lp_mean, lp_std = persistence_length(
                 job.fn("trajectory.gsd"),
-                select_atoms_arg=job.sp.bead_sequence,
+                select_atoms_arg="name " + select_atoms_arg,
                 window_size=50,
                 start=-1000,
                 stop=-1
         )
         job.doc.lp_mean = lp_mean
         job.doc.lp_std = lp_std
-
         print("Sampling finished.")
+        job.doc.sampling_done = True
 
 
 if __name__ == "__main__":
