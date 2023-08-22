@@ -66,9 +66,9 @@ def sample_done(job):
 
 @MyProject.post(sim_done)
 @MyProject.operation(
-        directives={"ngpu": 1, "executable": "python -u"}, name="simulation"
+        directives={"ngpu": 1, "executable": "python -u"}, name="npt"
 )
-def run_sim(job):
+def run_npt(job):
     import hoomd_polymers
     from hoomd_polymers.base.system import Pack
     from hoomd_polymers.base.simulation import Simulaton 
@@ -133,6 +133,7 @@ def run_sim(job):
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
         )
+
         # Anneal to just below target density
         sim.run_update_volume(
                 final_box=target_box*0.85,
@@ -141,17 +142,31 @@ def run_sim(job):
                 tau_kt=tau_kT,
                 kT=shrink_kT_ramp
         )
+
         # Run for a bit at lower density
         sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
+
         # Compress
         sim.run_update_volume(
                 final_box=target_box*1.15,
-                n_steps=job.sp.shrink_n_steps,
-                period=job.sp.shrink_period,
+                n_steps=5e6,
+                period=1000,
                 tau_kt=tau_kT,
                 kT=job.sp.kT
         )
+
         # Run for a bit at higher density
+        sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
+
+        # Expand back to target density
+        sim.run_update_volume(
+                final_box=target_box,
+                n_steps=5e6,
+                period=1000,
+                tau_kt=tau_kT,
+                kT=job.sp.kT
+        )
+        # Short run at NVT
         sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
         print("Shrink step finished.")
         print("Running NPT simulation.")
@@ -162,16 +177,16 @@ def run_sim(job):
                 tau_kt=tau_kt,
                 tau_pressure=job.sp.tau_pressure*sim.dt
         )
-        sim.save_restart_gsd(job.fn("restart.gsd"))
+        sim.save_restart_gsd(job.fn("npt-restart.gsd"))
         print("Simulation finished.")
 
 
 @MyProject.pre(sim_done)
 @MyProject.post(sample_done)
 @MyProject.operation(
-        directives={"ngpu": 1, "executable": "python -u"}, name="sample"
+        directives={"ngpu": 1, "executable": "python -u"}, name="sample-npt"
 )
-def sample(job):
+def sample_npt(job):
     # Add package imports here
     with job:
         print("JOB ID NUMBER:")
