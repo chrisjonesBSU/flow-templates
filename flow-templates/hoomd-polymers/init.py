@@ -31,9 +31,9 @@ def get_parameters():
     parameters["sigma_scale"] = [0.96]
     parameters["kT"] = [
             2.0,
-            3.0,
-            4.0,
-            5.0,
+    #        3.0,
+    #        4.0,
+    #        5.0,
     ]
     parameters["n_steps"] = [5e7]
     parameters["shrink_kT"] = [8.0]

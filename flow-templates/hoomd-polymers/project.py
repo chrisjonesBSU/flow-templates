@@ -71,13 +71,13 @@ def sample_done(job):
 def run_npt(job):
     import hoomd_polymers
     from hoomd_polymers.base.system import Pack
-    from hoomd_polymers.base.simulation import Simulaton 
+    from hoomd_polymers.base.simulation import Simulation
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
         print("------------------------------------")
         mol_cls = getattr(hoomd_polymers.library.polymers, job.sp.molecule)
-        ff = getattr(hoomd_polymers.forcefields, job.sp.forcefield)
+        ff = getattr(hoomd_polymers.library.forcefields, job.sp.forcefield)
         mol_obj = mol_cls(
                     num_moles=job.sp.num_mols,
                     lengths=job.sp.lengths,
@@ -91,7 +91,7 @@ def run_npt(job):
                     auto_scale=True,
                     remove_hydrogens=job.sp.remove_hydrogens,
                     remove_charges=job.sp.remove_charges
-                ) 
+                )
 
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
@@ -111,7 +111,7 @@ def run_npt(job):
         sim.reference_energy = system.reference_energy
         sim.reference_mass = system.reference_mass
         # Store unit information in job doc
-        tau_kT = sim.dt * job.sp.tau_kT 
+        tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
         job.doc.target_box = target_box
         job.doc.ref_mass = sim.reference_mass.to("amu").value()
@@ -125,7 +125,7 @@ def run_npt(job):
         job.doc.n_steps = job.sp.n_steps
         job.doc.simulation_time = job.doc.real_time_step * job.doc.n_steps
         job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
-        # Set up stuff for shrinking volume step 
+        # Set up stuff for shrinking volume step
         print("Running shrink step.")
         target_box = system.target_box/system.reference_distance.value()
         shrink_kT_ramp = sim.kT_ramp(
