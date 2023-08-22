@@ -76,18 +76,16 @@ def run_sim(job):
         print("JOB ID NUMBER:")
         print(job.id)
         print("------------------------------------")
-        mol_obj_list = []
-        for m in job.sp.molecules:
-            mol_cls = getattr(hoomd_polymers.library.polymers, job.sp.molecule)
-            mol_obj = mol_cls(
-                        num_moles=job.sp.num_mols,
-                        lengths=job.sp.lengths,
-                        force_field=job.sp.forcefield
-                    )
-            mol_obj_list.append(mol_obj)
+        mol_cls = getattr(hoomd_polymers.library.polymers, job.sp.molecule)
+        ff = getattr(hoomd_polymers.forcefields, job.sp.forcefield)
+        mol_obj = mol_cls(
+                    num_moles=job.sp.num_mols,
+                    lengths=job.sp.lengths,
+                    force_field=ff()
+                )
 
         system = Pack(
-                    molecules=mol_obj_list,
+                    molecule=mol_obj,
                     density=job.sp.density,
                     r_cut=job.sp.r_cut,
                     auto_scale=True,
@@ -108,7 +106,8 @@ def run_sim(job):
                 log_file_name=log_path,
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
-        sim.reference_length = system.reference_length
+        sim.save_restart_gsd(job.fn("init.gsd"))
+        sim.reference_length = system.reference_length * job.sp.sigma_scale
         sim.reference_energy = system.reference_energy
         sim.reference_mass = system.reference_mass
         # Store unit information in job doc
@@ -119,8 +118,8 @@ def run_sim(job):
         job.doc.ref_mass_units = "amu"
         job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value()
         job.doc.ref_energy_units = "kJ/mol"
-        job.doc.ref_length = sim.reference_length.to("angstrom").value()
-        job.doc.ref_length_units = "angstrom"
+        job.doc.ref_length = sim.reference_length.to("nm").value()
+        job.doc.ref_length_units = "nm"
         job.doc.real_time_step = sim.real_timestep.to("fs").value()
         job.doc.real_time_units = "fs"
         job.doc.n_steps = job.sp.n_steps
@@ -128,22 +127,41 @@ def run_sim(job):
         job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
         # Set up stuff for shrinking volume step 
         print("Running shrink step.")
-        target_box = system.target_box / system.reference_distance.to("angstrom").value()
+        target_box = system.target_box/system.reference_distance.value()
         shrink_kT_ramp = sim.kT_ramp(
                 n_steps=job.sp.shrink_n_steps,
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
         )
+        # Anneal to just below target density
         sim.run_update_volume(
-                final_box=target_box,
+                final_box=target_box*0.85,
                 n_steps=job.sp.shrink_n_steps,
                 period=job.sp.shrink_period,
                 tau_kt=tau_kT,
                 kT=shrink_kT_ramp
         )
+        # Run for a bit at lower density
+        sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
+        # Compress
+        sim.run_update_volume(
+                final_box=target_box*1.15,
+                n_steps=job.sp.shrink_n_steps,
+                period=job.sp.shrink_period,
+                tau_kt=tau_kT,
+                kT=job.sp.kT
+        )
+        # Run for a bit at higher density
+        sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
         print("Shrink step finished.")
-        print("Running simulation.")
-        sim.run_NVT(kT=job.sp.kT, n_steps=job.sp.n_steps, tau_kt=tau_kT)
+        print("Running NPT simulation.")
+        sim.run_NPT(
+                kT=job.sp.kT,
+                pressure=job.sp.pressure,
+                n_steps=job.sp.n_steps,
+                tau_kt=tau_kt,
+                tau_pressure=job.sp.tau_pressure*sim.dt
+        )
         sim.save_restart_gsd(job.fn("restart.gsd"))
         print("Simulation finished.")
 
