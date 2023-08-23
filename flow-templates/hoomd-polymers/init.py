@@ -23,9 +23,9 @@ def get_parameters():
     parameters = OrderedDict()
     parameters["molecule"] = ["PPS"]
     parameters["forcefield"] = ["OPLS_AA_PPS"]
-    parameters["num_mols"] = [50]
+    parameters["num_mols"] = [5]
     parameters["lengths"] = [24]
-    parameters["density"] = [1.35]
+    parameters["density"] = [0.35]
     parameters["remove_hydrogens"] = [True]
     parameters["remove_charges"] = [True]
     parameters["sigma_scale"] = [0.96]

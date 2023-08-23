@@ -71,26 +71,26 @@ def sample_done(job):
 def run_npt(job):
     import hoomd_polymers
     from hoomd_polymers.base.system import Pack
+    from hoomd_polymers.library import PPS, OPLS_AA_PPS
     from hoomd_polymers.base.simulation import Simulation
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
         print("------------------------------------")
-        mol_cls = getattr(hoomd_polymers.library.polymers, job.sp.molecule)
-        ff = getattr(hoomd_polymers.library.forcefields, job.sp.forcefield)
-        mol_obj = mol_cls(
-                    num_moles=job.sp.num_mols,
-                    lengths=job.sp.lengths,
-                    force_field=ff()
-                )
+        pps = PPS(
+                num_mols=job.sp.num_mols,
+                lengths=job.sp.lengths,
+                #force_field=OPLS_AA_PPS()
+        )
 
         system = Pack(
-                    molecule=mol_obj,
+                    molecules=pps,
                     density=job.sp.density,
                     r_cut=job.sp.r_cut,
                     auto_scale=True,
                     remove_hydrogens=job.sp.remove_hydrogens,
-                    remove_charges=job.sp.remove_charges
+                    remove_charges=job.sp.remove_charges,
+                    force_field=OPLS_AA_PPS()
                 )
 
         gsd_path = job.fn("trajectory.gsd")
@@ -110,25 +110,25 @@ def run_npt(job):
         sim.reference_length = system.reference_length * job.sp.sigma_scale
         sim.reference_energy = system.reference_energy
         sim.reference_mass = system.reference_mass
+        target_box = system.target_box/system.reference_length.value
         # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
         job.doc.target_box = target_box
-        job.doc.ref_mass = sim.reference_mass.to("amu").value()
+        job.doc.ref_mass = sim.reference_mass.to("amu").value
         job.doc.ref_mass_units = "amu"
-        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value()
+        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value
         job.doc.ref_energy_units = "kJ/mol"
-        job.doc.ref_length = sim.reference_length.to("nm").value()
+        job.doc.ref_length = sim.reference_length.to("nm").value
         job.doc.ref_length_units = "nm"
-        job.doc.real_time_step = sim.real_timestep.to("fs").value()
+        job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
         job.doc.n_steps = job.sp.n_steps
         job.doc.simulation_time = job.doc.real_time_step * job.doc.n_steps
         job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
-        target_box = system.target_box/system.reference_distance.value()
-        shrink_kT_ramp = sim.kT_ramp(
+        shrink_kT_ramp = sim.temperature_ramp(
                 n_steps=job.sp.shrink_n_steps,
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
@@ -136,7 +136,7 @@ def run_npt(job):
 
         # Anneal to just below target density
         sim.run_update_volume(
-                final_box=target_box*0.85,
+                final_box_lengths=target_box*0.85,
                 n_steps=job.sp.shrink_n_steps,
                 period=job.sp.shrink_period,
                 tau_kt=tau_kT,
@@ -148,7 +148,7 @@ def run_npt(job):
 
         # Compress
         sim.run_update_volume(
-                final_box=target_box*1.15,
+                final_box_lengths=target_box*1.15,
                 n_steps=5e6,
                 period=1000,
                 tau_kt=tau_kT,
@@ -160,7 +160,7 @@ def run_npt(job):
 
         # Expand back to target density
         sim.run_update_volume(
-                final_box=target_box,
+                final_box_lengths=target_box,
                 n_steps=5e6,
                 period=1000,
                 tau_kt=tau_kT,
