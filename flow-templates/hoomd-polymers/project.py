@@ -74,13 +74,12 @@ def run_npt(job):
     from hoomd_polymers.library import PPS, OPLS_AA_PPS
     from hoomd_polymers.base.simulation import Simulation
     with job:
+        print("------------------------------------")
         print("JOB ID NUMBER:")
         print(job.id)
         print("------------------------------------")
         pps = PPS(
-                num_mols=job.sp.num_mols,
-                lengths=job.sp.lengths,
-                #force_field=OPLS_AA_PPS()
+                num_mols=job.sp.num_mols, lengths=job.sp.lengths,
         )
 
         system = Pack(
@@ -92,6 +91,15 @@ def run_npt(job):
                     remove_charges=job.sp.remove_charges,
                     force_field=OPLS_AA_PPS()
                 )
+        # Store reference units and values
+        job.doc.ref_mass = sim.reference_mass.to("amu").value
+        job.doc.ref_mass_units = "amu"
+        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value
+        job.doc.ref_energy_units = "kJ/mol"
+        job.doc.ref_length = (
+                sim.reference_length.to("nm").value * job.sp.sigma_scale
+        )
+        job.doc.ref_length_units = "nm"
 
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
@@ -107,20 +115,14 @@ def run_npt(job):
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
         sim.save_restart_gsd(job.fn("init.gsd"))
-        sim.reference_length = system.reference_length * job.sp.sigma_scale
+        sim.reference_length = job.doc.ref_length
         sim.reference_energy = system.reference_energy
         sim.reference_mass = system.reference_mass
-        target_box = system.target_box/system.reference_length.value
-        # Store unit information in job doc
+        target_box = system.target_box/job.doc.ref_length
+        # Store more unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
         job.doc.target_box = target_box
-        job.doc.ref_mass = sim.reference_mass.to("amu").value
-        job.doc.ref_mass_units = "amu"
-        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value
-        job.doc.ref_energy_units = "kJ/mol"
-        job.doc.ref_length = sim.reference_length.to("nm").value
-        job.doc.ref_length_units = "nm"
         job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
         job.doc.n_steps = job.sp.n_steps
@@ -148,7 +150,7 @@ def run_npt(job):
 
         # Compress
         sim.run_update_volume(
-                final_box_lengths=target_box*1.15,
+                final_box_lengths=target_box*1.20,
                 n_steps=5e6,
                 period=1000,
                 tau_kt=tau_kT,
@@ -156,7 +158,7 @@ def run_npt(job):
         )
 
         # Run for a bit at higher density
-        sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
+        sim.run_NVT(n_steps=5e6, kT=job.sp.kT, tau_kt=tau_kT)
 
         # Expand back to target density
         sim.run_update_volume(
