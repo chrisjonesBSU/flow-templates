@@ -138,7 +138,7 @@ def run_npt(job):
 
         # Anneal to just below target density
         sim.run_update_volume(
-                final_box_lengths=target_box*0.85,
+                final_box_lengths=target_box*1.20,
                 n_steps=job.sp.shrink_n_steps,
                 period=job.sp.shrink_period,
                 tau_kt=tau_kT,
@@ -150,7 +150,7 @@ def run_npt(job):
 
         # Compress
         sim.run_update_volume(
-                final_box_lengths=target_box*1.20,
+                final_box_lengths=target_box*0.85,
                 n_steps=5e6,
                 period=1000,
                 tau_kt=tau_kT,
