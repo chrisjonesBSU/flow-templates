@@ -69,6 +69,8 @@ def sample_done(job):
         directives={"ngpu": 1, "executable": "python -u"}, name="npt"
 )
 def run_npt(job):
+    import unyt
+    from unyt import Unit
     import hoomd_polymers
     from hoomd_polymers.base.system import Pack
     from hoomd_polymers.library import PPS, OPLS_AA_PPS
@@ -92,15 +94,15 @@ def run_npt(job):
                     force_field=OPLS_AA_PPS()
                 )
         # Store reference units and values
-        job.doc.ref_mass = sim.reference_mass.to("amu").value
+        job.doc.ref_mass = system.reference_mass.to("amu").value
         job.doc.ref_mass_units = "amu"
-        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value
+        job.doc.ref_energy = system.reference_energy.to("kJ/mol").value
         job.doc.ref_energy_units = "kJ/mol"
         job.doc.ref_length = (
-                sim.reference_length.to("nm").value * job.sp.sigma_scale
+                system.reference_length.to("nm").value * job.sp.sigma_scale
         )
         job.doc.ref_length_units = "nm"
-
+        # Set up Simulation obj
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
         sim = Simulation(
@@ -115,7 +117,7 @@ def run_npt(job):
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
         sim.save_restart_gsd(job.fn("init.gsd"))
-        sim.reference_length = job.doc.ref_length
+        sim.reference_length = job.doc.ref_length * Unit("nm")
         sim.reference_energy = system.reference_energy
         sim.reference_mass = system.reference_mass
         target_box = system.target_box/job.doc.ref_length
