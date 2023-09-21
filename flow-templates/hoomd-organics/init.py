@@ -21,39 +21,45 @@ from itertools import product
 def get_parameters():
     ''''''
     parameters = OrderedDict()
-    parameters["molecule"] = ["PPS"]
-    parameters["forcefield"] = ["OPLS_AA_PPS"]
-    parameters["num_mols"] = [20]
-    parameters["lengths"] = [10]
-    parameters["density"] = [
-            #1.32,
-            0.5,
+    parameters["num_mols"] = [50]
+    parameters["lengths"] = [25]
+    parameters["density"] = [1.32]
+    parameters["remove_hydrogens"] = [True, False]
+    parameters["remove_charges"] = [
+            #True,
+            False
     ]
-    parameters["remove_hydrogens"] = [True]
-    parameters["remove_charges"] = [True]
     parameters["sigma_scale"] = [0.96]
     parameters["kT"] = [
-            #1.0,
-            #1.5,
-            #2.0,
-            #2.5,
-            #3.0,
-            #3.5,
-            #4.0,
-            #4.5,
+            1.0,
+            1.25,
+            1.5,
+            1.75,
+            2.0,
+            2.25,
+            2.5,
+            2.75,
+            3.0,
+            3.25,
+            3.5,
+            3.75,
+            4.0,
+            4.25,
+            4.5,
+            4.75,
             5.0,
     ]
-    parameters["pressure"] = [0.0027]
+    parameters["pressure"] = [0.002332]
     parameters["n_steps"] = [5e7]
     parameters["shrink_kT"] = [8.0]
     parameters["shrink_n_steps"] = [5e7]
     parameters["shrink_period"] = [10000]
     parameters["r_cut"] = [2.5]
-    parameters["dt"] = [0.0003]
     parameters["tau_kT"] = [100]
     parameters["tau_pressure"] = [10]
     parameters["gsd_write_freq"] = [1e5]
     parameters["log_write_freq"] = [1e4]
+    parameters["sim_seed"] = [42]
     return list(parameters.keys()), list(product(*parameters.values()))
 
 
