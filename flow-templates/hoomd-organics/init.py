@@ -21,8 +21,8 @@ from itertools import product
 def get_parameters():
     ''''''
     parameters = OrderedDict()
-    parameters["num_mols"] = [50]
-    parameters["lengths"] = [25]
+    parameters["num_mols"] = [10]
+    parameters["lengths"] = [10]
     parameters["density"] = [1.32]
     parameters["remove_hydrogens"] = [True, False]
     parameters["remove_charges"] = [

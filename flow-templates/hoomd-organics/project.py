@@ -110,20 +110,21 @@ def run_npt(job):
         log_path = job.fn("log.txt")
         sim = Simulation.from_system(
                 system,
-                gsd_write=job.sp.gsd_write_freq,
+                gsd_write_freq=job.sp.gsd_write_freq,
                 gsd_file_name=gsd_path,
-                log_write=job.sp.log_write_freq,
+                log_write_freq=job.sp.log_write_freq,
                 log_file_name=log_path,
                 dt=job.doc.dt,
                 seed=job.sp.sim_seed,
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
+        target_box = system.target_box
         # Store more unit information in job doc
         tau_kT = job.doc.dt * job.sp.tau_kT
         tau_pressure = job.doc.dt * job.sp.tau_pressure
         job.doc.tau_kT = tau_kT
         job.doc.tau_pressure = tau_pressure
-        job.doc.target_box = target_box
+        job.doc.target_box = target_box * job.doc.ref_length
         job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
 
