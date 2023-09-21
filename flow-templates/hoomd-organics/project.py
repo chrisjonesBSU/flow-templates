@@ -69,9 +69,9 @@ def sample_done(job):
         directives={"ngpu": 1, "executable": "python -u"}, name="simulation"
 )
 def run_sim(job):
-    import hoomd_polymers
-    from hoomd_polymers.base.system import Pack
-    from hoomd_polymers.base.simulation import Simulaton 
+    import hoomd_organics 
+    from hoomd_organics.base.system import Pack
+    from hoomd_organics.base.simulation import Simulaton 
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
@@ -80,19 +80,22 @@ def run_sim(job):
         for m in job.sp.molecules:
             mol_cls = getattr(hoomd_polymers.library.polymers, job.sp.molecule)
             mol_obj = mol_cls(
-                        num_moles=job.sp.num_mols,
+                        num_mols=job.sp.num_mols,
                         lengths=job.sp.lengths,
-                        force_field=job.sp.forcefield
                     )
             mol_obj_list.append(mol_obj)
+        
+        ff = getattr(hoomd_polymers.library.forcefields, job.sp.forcefield)
 
         system = Pack(
                     molecules=mol_obj_list,
                     density=job.sp.density,
                     r_cut=job.sp.r_cut,
                     auto_scale=True,
+                    force_field=ff()
                     remove_hydrogens=job.sp.remove_hydrogens,
                     remove_charges=job.sp.remove_charges
+                    scale_charges=True,
                 ) 
 
         gsd_path = job.fn("trajectory.gsd")
