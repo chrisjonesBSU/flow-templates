@@ -137,7 +137,7 @@ def run_npt(job):
         )
 
         # Run for a bit at lower density
-        sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
+        sim.run_NVT(n_steps=5e7, kT=job.sp.kT, tau_kt=tau_kT)
 
         # Compress
         sim.run_update_volume(
@@ -147,9 +147,6 @@ def run_npt(job):
                 tau_kt=tau_kT,
                 kT=job.sp.kT
         )
-
-        # Run for a bit at higher density
-        sim.run_NVT(n_steps=5e6, kT=job.sp.kT, tau_kt=tau_kT)
 
         # Expand back to target density
         sim.run_update_volume(
