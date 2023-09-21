@@ -87,6 +87,7 @@ def run_npt(job):
                     density=job.sp.density,
                     r_cut=job.sp.r_cut,
                     auto_scale=True,
+                    scale_charges=True,
                     remove_hydrogens=job.sp.remove_hydrogens,
                     remove_charges=job.sp.remove_charges,
                     force_field=OPLS_AA_PPS()
