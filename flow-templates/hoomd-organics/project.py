@@ -100,6 +100,11 @@ def run_npt(job):
                 system.reference_length.to("nm").value * job.sp.sigma_scale
         )
         job.doc.ref_length_units = "nm"
+        if job.sp.remove_hydrogens:
+            dt = 0.0003
+        else:
+            dt = 0.0001
+        job.doc.dt = dt
         # Set up Simulation obj
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
@@ -109,16 +114,19 @@ def run_npt(job):
                 gsd_file_name=gsd_path,
                 log_write=job.sp.log_write_freq,
                 log_file_name=log_path,
-                dt=job.sp.dt,
+                dt=job.doc.dt,
                 seed=job.sp.sim_seed,
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
         # Store more unit information in job doc
-        tau_kT = sim.dt * job.sp.tau_kT
+        tau_kT = job.doc.dt * job.sp.tau_kT
+        tau_pressure = job.doc.dt * job.sp.tau_pressure
         job.doc.tau_kT = tau_kT
+        job.doc.tau_pressure = tau_pressure
         job.doc.target_box = target_box
         job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
+
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
         shrink_kT_ramp = sim.temperature_ramp(
@@ -165,7 +173,7 @@ def run_npt(job):
                 pressure=job.sp.pressure,
                 n_steps=job.sp.n_steps,
                 tau_kt=tau_kt,
-                tau_pressure=job.sp.tau_pressure*sim.dt
+                tau_pressure=job.doc.tau_pressure
         )
         sim.save_restart_gsd(job.fn("npt-restart.gsd"))
         print("Simulation finished.")
