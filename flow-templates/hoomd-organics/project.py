@@ -71,18 +71,16 @@ def sample_done(job):
 def run_npt(job):
     import unyt
     from unyt import Unit
-    import hoomd_polymers
-    from hoomd_polymers.base.system import Pack
-    from hoomd_polymers.library import PPS, OPLS_AA_PPS
-    from hoomd_polymers.base.simulation import Simulation
+    import hoomd_organics
+    from hoomd_organics.base.system import Pack
+    from hoomd_organics.library import PPS, OPLS_AA_PPS
+    from hoomd_organics.base.simulation import Simulation
     with job:
         print("------------------------------------")
         print("JOB ID NUMBER:")
         print(job.id)
         print("------------------------------------")
-        pps = PPS(
-                num_mols=job.sp.num_mols, lengths=job.sp.lengths,
-        )
+        pps = PPS(num_mols=job.sp.num_mols, lengths=job.sp.lengths)
 
         system = Pack(
                     molecules=pps,
@@ -105,31 +103,22 @@ def run_npt(job):
         # Set up Simulation obj
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
-        sim = Simulation(
-                initial_state=system.hoomd_snapshot,
-                forcefield=system.hoomd_forcefield,
-                dt=job.sp.dt,
-                r_cut=job.sp.r_cut,
-                gsd_write_freq=job.sp.gsd_write_freq,
+        sim = Simulation.from_system(
+                system,
+                gsd_write=job.sp.gsd_write_freq,
                 gsd_file_name=gsd_path,
-                log_write_freq=job.sp.log_write_freq,
+                log_write=job.sp.log_write_freq,
                 log_file_name=log_path,
+                dt=job.sp.dt,
+                seed=job.sp.sim_seed,
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
-        sim.save_restart_gsd(job.fn("init.gsd"))
-        sim.reference_length = job.doc.ref_length * Unit("nm")
-        sim.reference_energy = system.reference_energy
-        sim.reference_mass = system.reference_mass
-        target_box = system.target_box/job.doc.ref_length
         # Store more unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
         job.doc.target_box = target_box
         job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
-        job.doc.n_steps = job.sp.n_steps
-        job.doc.simulation_time = job.doc.real_time_step * job.doc.n_steps
-        job.doc.shrink_time = job.doc.real_time_step * job.sp.shrink_n_steps
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
         shrink_kT_ramp = sim.temperature_ramp(
@@ -152,7 +141,7 @@ def run_npt(job):
 
         # Compress
         sim.run_update_volume(
-                final_box_lengths=target_box*0.85,
+                final_box_lengths=target_box*0.80,
                 n_steps=5e6,
                 period=1000,
                 tau_kt=tau_kT,
@@ -165,14 +154,14 @@ def run_npt(job):
         # Expand back to target density
         sim.run_update_volume(
                 final_box_lengths=target_box,
-                n_steps=5e6,
+                n_steps=2e7,
                 period=1000,
                 tau_kt=tau_kT,
                 kT=job.sp.kT
         )
         # Short run at NVT
         sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
-        print("Shrink step finished.")
+        print("Shrinking and compressing finished.")
         print("Running NPT simulation.")
         sim.run_NPT(
                 kT=job.sp.kT,
@@ -183,7 +172,6 @@ def run_npt(job):
         )
         sim.save_restart_gsd(job.fn("npt-restart.gsd"))
         print("Simulation finished.")
-
 
 @MyProject.pre(sim_done)
 @MyProject.post(sample_done)
