@@ -139,45 +139,27 @@ def run_npt(job):
 
         # Anneal to just below target density
         sim.run_update_volume(
-                final_box_lengths=target_box*1.20,
+                final_box_lengths=target_box*1.10,
                 n_steps=job.sp.shrink_n_steps,
                 period=job.sp.shrink_period,
                 tau_kt=tau_kT,
                 kT=shrink_kT_ramp
         )
 
-        # Run for a bit at lower density
-        sim.run_NVT(n_steps=5e7, kT=job.sp.kT, tau_kt=tau_kT)
-
-        # Compress
-        sim.run_update_volume(
-                final_box_lengths=target_box*0.80,
-                n_steps=5e6,
-                period=1000,
-                tau_kt=tau_kT,
-                kT=job.sp.kT
-        )
-
-        # Expand back to target density
-        sim.run_update_volume(
-                final_box_lengths=target_box,
-                n_steps=2e7,
-                period=1000,
-                tau_kt=tau_kT,
-                kT=job.sp.kT
-        )
         # Short run at NVT
-        sim.run_NVT(n_steps=2e7, kT=job.sp.kT, tau_kt=tau_kT)
+        sim.run_NVT(n_steps=1e7, kT=job.sp.kT, tau_kt=tau_kT)
         print("Shrinking and compressing finished.")
         print("Running NPT simulation.")
         sim.run_NPT(
                 kT=job.sp.kT,
                 pressure=job.sp.pressure,
                 n_steps=job.sp.n_steps,
-                tau_kt=tau_kt,
-                tau_pressure=job.doc.tau_pressure
+                tau_kt=tau_kT,
+                tau_pressure=job.doc.tau_pressure,
+                gamma=job.sp.gamma
         )
         sim.save_restart_gsd(job.fn("npt-restart.gsd"))
+        job.doc.sim_done = True
         print("Simulation finished.")
 
 @MyProject.pre(sim_done)

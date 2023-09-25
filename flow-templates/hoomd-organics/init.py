@@ -21,42 +21,42 @@ from itertools import product
 def get_parameters():
     ''''''
     parameters = OrderedDict()
-    parameters["num_mols"] = [50]
-    parameters["lengths"] = [25]
-    parameters["density"] = [1.32]
-    parameters["remove_hydrogens"] = [True, False]
+    parameters["num_mols"] = [30]
+    parameters["lengths"] = [20]
+    parameters["density"] = [1.30]
+    parameters["remove_hydrogens"] = [
+            True,
+            False
+    ]
     parameters["remove_charges"] = [
-            #True,
+            True,
             False
     ]
     parameters["sigma_scale"] = [0.96]
     parameters["kT"] = [
+            #0.8,
             1.0,
-            1.25,
-            1.5,
-            1.75,
+            1.2,
+            #1.4,
+            1.6,
+            #1.8,
             2.0,
-            2.25,
-            2.5,
-            2.75,
-            3.0,
-            3.25,
-            3.5,
-            3.75,
-            4.0,
-            4.25,
-            4.5,
-            4.75,
-            5.0,
+            #2.2,
+            2.4,
+            #2.6,
+            2.8,
+            #3.0,
+            3.2,
     ]
     parameters["pressure"] = [0.002332]
-    parameters["n_steps"] = [5e7]
+    parameters["n_steps"] = [3e7]
     parameters["shrink_kT"] = [8.0]
-    parameters["shrink_n_steps"] = [5e7]
+    parameters["shrink_n_steps"] = [1e7]
     parameters["shrink_period"] = [10000]
     parameters["r_cut"] = [2.5]
     parameters["tau_kT"] = [100]
-    parameters["tau_pressure"] = [10]
+    parameters["tau_pressure"] = [1000]
+    parameters["gamma"] = [0]
     parameters["gsd_write_freq"] = [1e5]
     parameters["log_write_freq"] = [1e4]
     parameters["sim_seed"] = [42]
