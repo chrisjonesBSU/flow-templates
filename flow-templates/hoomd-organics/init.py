@@ -24,7 +24,10 @@ def get_parameters():
     parameters["num_mols"] = [50]
     parameters["lengths"] = [25]
     parameters["density"] = [1.32]
-    parameters["remove_hydrogens"] = [True, False]
+    parameters["remove_hydrogens"] = [
+            #True,
+            False
+    ]
     parameters["remove_charges"] = [
             #True,
             False

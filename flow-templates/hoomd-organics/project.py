@@ -151,7 +151,7 @@ def run_npt(job):
 
         # Compress
         sim.run_update_volume(
-                final_box_lengths=target_box*0.80,
+                final_box_lengths=target_box*0.90,
                 n_steps=5e6,
                 period=1000,
                 tau_kt=tau_kT,
@@ -160,7 +160,7 @@ def run_npt(job):
 
         # Expand back to target density
         sim.run_update_volume(
-                final_box_lengths=target_box,
+                final_box_lengths=target_box*1.10,
                 n_steps=2e7,
                 period=1000,
                 tau_kt=tau_kT,
@@ -174,7 +174,7 @@ def run_npt(job):
                 kT=job.sp.kT,
                 pressure=job.sp.pressure,
                 n_steps=job.sp.n_steps,
-                tau_kt=tau_kt,
+                tau_kt=tau_kT,
                 tau_pressure=job.doc.tau_pressure
         )
         sim.save_restart_gsd(job.fn("npt-restart.gsd"))
