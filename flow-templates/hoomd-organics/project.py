@@ -146,6 +146,26 @@ def run_npt(job):
                 kT=shrink_kT_ramp
         )
 
+        # Run for a bit at lower density
+        sim.run_NVT(n_steps=5e7, kT=job.sp.kT, tau_kt=tau_kT)
+
+        # Compress
+        sim.run_update_volume(
+                final_box_lengths=target_box*0.90,
+                n_steps=5e6,
+                period=1000,
+                tau_kt=tau_kT,
+                kT=job.sp.kT
+        )
+
+        # Expand back to target density
+        sim.run_update_volume(
+                final_box_lengths=target_box*1.10,
+                n_steps=2e7,
+                period=1000,
+                tau_kt=tau_kT,
+                kT=job.sp.kT
+        )
         # Short run at NVT
         sim.run_NVT(n_steps=1e7, kT=job.sp.kT, tau_kt=tau_kT)
         print("Shrinking and compressing finished.")
