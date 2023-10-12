@@ -29,7 +29,7 @@ def get_parameters():
     parameters["remove_hydrogens"] = [True]
     parameters["remove_charges"] = [True]
     parameters["kT"] = [5.0]
-    parameters["n_steps"] = [5e8]
+    parameters["n_steps"] = [5e5]
     parameters["shrink_kT"] = [8.0]
     parameters["shrink_n_steps"] = [5e7]
     parameters["shrink_period"] = [10000]
