@@ -21,26 +21,30 @@ from itertools import product
 def get_parameters():
     ''''''
     parameters = OrderedDict()
-    # Define some system related parameters:
-    parameters["molecule"] = ["PPS"]
-    parameters["forcefield"] = ["OPLS_AA_PPS"]
+    # Beads and system:
     parameters["num_mols"] = [20]
     parameters["lengths"] = [15]
     parameters["density"] = [1.2]
-    parameters["remove_hydrogens"] = [True]
-    parameters["remove_charges"] = [True]
-    parameters["pppm_resolution"] = [(16, 16, 16)]
-    parameters["pppm_order"] = [4]
-    parameters["remove_charges"] = [True]
     parameters["auto_scale"] = [True]
+    parameters["bead_mass"] = [100]
+    # GB Params
+    parameters["lpar"] = [1.0]
+    parameters["lper"] = [0.4]
+    parameters["epsilon"] = [1.0]
+    # Bonds
+    parameters["r0"] = [0.01]
+    parameters["bond_k"] = [500]
+    # Angles
+    parameters["theta0"] = [2.5]
+    parameters["theta_k"] = [100]
     # Define some simulation related parameters:
-    parameters["kT"] = [3.0]
+    parameters["kT"] = [1.0]
     parameters["n_steps"] = [5e5]
     parameters["shrink_kT"] = [8.0]
     parameters["shrink_n_steps"] = [5e5]
     parameters["shrink_period"] = [10000]
     parameters["r_cut"] = [2.5]
-    parameters["dt"] = [0.0003]
+    parameters["dt"] = [0.0005]
     parameters["tau_kT"] = [100] # Used as a multiple of dt
     parameters["gsd_write_freq"] = [1e4]
     parameters["log_write_freq"] = [1e3]
