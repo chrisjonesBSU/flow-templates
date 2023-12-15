@@ -22,15 +22,15 @@ def get_parameters():
     ''''''
     parameters = OrderedDict()
     # Beads and system:
-    parameters["num_mols"] = [20]
+    parameters["num_mols"] = [30]
     parameters["lengths"] = [15]
     parameters["density"] = [1.2]
     parameters["auto_scale"] = [True]
-    parameters["bead_mass"] = [100]
+    parameters["bead_mass"] = [100] # amu
     # GB Params
-    parameters["lpar"] = [1.0]
-    parameters["lper"] = [0.4]
-    parameters["epsilon"] = [1.0]
+    parameters["lpar"] = [0.5] # nm
+    parameters["lperp"] = [0.25] # nm
+    parameters["epsilon"] = [1.0] # kJ/mol
     # Bonds
     parameters["r0"] = [0.01]
     parameters["bond_k"] = [500]
@@ -46,8 +46,9 @@ def get_parameters():
     parameters["r_cut"] = [2.5]
     parameters["dt"] = [0.0005]
     parameters["tau_kT"] = [100] # Used as a multiple of dt
-    parameters["gsd_write_freq"] = [1e4]
-    parameters["log_write_freq"] = [1e3]
+    parameters["gsd_write_freq"] = [1e5]
+    parameters["log_write_freq"] = [1e4]
+    parameters["seed"] = [24]
     return list(parameters.keys()), list(product(*parameters.values()))
 
 

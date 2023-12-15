@@ -69,6 +69,8 @@ def sample_done(job):
         directives={"ngpu": 1, "executable": "python -u"}, name="nvt"
 )
 def run_nvt(job):
+    import unyt as u
+    from unyt import Unit
     import flowermd
     from flowermd.base import Pack, Simulation
     from flowermd.library.polymers import EllipsoidChain
@@ -80,27 +82,31 @@ def run_nvt(job):
         print(job.id)
         print("------------------------------------")
         chains = EllipsoidChain(
-                lengths=job.sp.chain_lengths,
+                lengths=job.sp.lengths,
                 num_mols=job.sp.num_mols,
-                bead_length=job.sp.lpar * 2,
+                lpar=job.sp.lpar,
                 bead_mass=job.sp.bead_mass,
                 bond_length=0.001,
         )
         system = Pack(
-                molecule=chains,
+                molecules=chains,
                 density=job.sp.density,
-                fix_orientation=True
+                fix_orientation=True,
+                base_units = {
+                    "mass": 1 * Unit("amu"),
+                    "length": 1 * Unit("nm"),
+                    "energy": 1 * Unit("kJ/mol")
+                }
         )
         rigid_frame, rigid = create_rigid_body(
                 system.hoomd_snapshot,
-                ellipsoid_chain.bead_constituents_types
+                chains.bead_constituents_types
         )
 
         ellipsoid_ff = EllipsoidForcefield(
                 epsilon=job.sp.epsilon,
                 lperp=job.sp.lperp,
                 lpar=job.sp.lpar,
-                bead_length=job.sp.lpar * 2,
                 r_cut=job.sp.r_cut,
                 bond_k=job.sp.bond_k,
                 bond_r0=job.sp.r0,
@@ -115,6 +121,7 @@ def run_nvt(job):
                 r_cut=job.sp.r_cut,
                 dt=job.sp.dt,
                 seed=job.sp.seed,
+                reference_values=system.reference_values,
                 gsd_write_freq=job.sp.gsd_write_freq,
                 log_write_freq=job.sp.log_write_freq,
                 gsd_file_name=job.fn("trajectory.gsd"),
@@ -124,17 +131,17 @@ def run_nvt(job):
         # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
-        job.doc.ref_mass = sim.reference_mass.to("amu").value()
+        job.doc.ref_mass = sim.reference_mass.to("amu").value
         job.doc.ref_mass_units = "amu"
-        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value()
+        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value
         job.doc.ref_energy_units = "kJ/mol"
-        job.doc.ref_length = sim.reference_length.to("nm").value()
+        job.doc.ref_length = sim.reference_length.to("nm").value
         job.doc.ref_length_units = "nm"
-        job.doc.real_time_step = sim.real_timestep.to("fs").value()
+        job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
-        shrink_kT_ramp = sim.kT_ramp(
+        shrink_kT_ramp = sim.temperature_ramp(
                 n_steps=job.sp.shrink_n_steps,
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
