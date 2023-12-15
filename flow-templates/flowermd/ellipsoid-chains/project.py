@@ -93,9 +93,9 @@ def run_nvt(job):
                 density=job.sp.density,
                 fix_orientation=True,
                 base_units = {
-                    "mass": 1 * Unit("amu"),
-                    "length": 1 * Unit("nm"),
-                    "energy": 1 * Unit("kJ/mol")
+                    "mass": job.sp.bead_mass * Unit("amu"),
+                    "length": job.sp.lpar * Unit("nm"),
+                    "energy": job.sp.epsilon * Unit("kJ/mol")
                 }
         )
         rigid_frame, rigid = create_rigid_body(

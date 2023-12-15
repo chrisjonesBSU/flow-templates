@@ -26,7 +26,7 @@ def get_parameters():
     parameters["lengths"] = [15]
     parameters["density"] = [1.2]
     parameters["auto_scale"] = [True]
-    parameters["bead_mass"] = [100] # amu
+    parameters["bead_mass"] = [200] # amu
     # GB Params
     parameters["lpar"] = [0.5] # nm
     parameters["lperp"] = [0.25] # nm
@@ -43,7 +43,7 @@ def get_parameters():
     parameters["shrink_kT"] = [8.0]
     parameters["shrink_n_steps"] = [5e5]
     parameters["shrink_period"] = [10000]
-    parameters["r_cut"] = [2.5]
+    parameters["r_cut"] = [2.0]
     parameters["dt"] = [0.0005]
     parameters["tau_kT"] = [100] # Used as a multiple of dt
     parameters["gsd_write_freq"] = [1e5]
