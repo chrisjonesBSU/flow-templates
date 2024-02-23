@@ -68,103 +68,80 @@ def sample_done(job):
 @MyProject.operation(
         directives={"ngpu": 1, "executable": "python -u"}, name="nvt"
 )
-<<<<<<<< HEAD:flow-templates/hoomd-organics/project.py
-def run_sim(job):
-    import hoomd_organics 
-    from hoomd_organics.base.system import Pack
-    from hoomd_organics.base.simulation import Simulaton 
-|||||||| 63276aa:flow-templates/hoomd-polymers/project.py
-def run_sim(job):
-    import hoomd_polymers
-    from hoomd_polymers.base.system import Pack
-    from hoomd_polymers.base.simulation import Simulaton 
-========
 def run_nvt(job):
+    import unyt as u
+    from unyt import Unit
     import flowermd
-    from flowermd.base.system import Pack
-    from flowermd.base.simulation import Simulaton
->>>>>>>> 92d5ec22227613933d701fa818ca23fd5b66f27e:flow-templates/flowermd/project.py
+    from flowermd.base import Pack, Simulation
+    from flowermd.library.polymers import EllipsoidChain
+    from flowermd.library.forcefields import EllipsoidForcefield
+    from flowermd.utils.rigid_body import create_rigid_body
+
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
         print("------------------------------------")
-        mol_obj_list = []
-        for m in job.sp.molecules:
-            mol_cls = getattr(flowermd.library.polymers, job.sp.molecule)
-            mol_obj = mol_cls(
-                        num_mols=job.sp.num_mols,
-                        lengths=job.sp.lengths,
-                    )
-            mol_obj_list.append(mol_obj)
-        
-        ff = getattr(hoomd_polymers.library.forcefields, job.sp.forcefield)
-
-        ff_obj_list = []
-        for ff in job.sp.forcefields:
-            force_obj = getattr(flowermd.library.forcefields, ff)
-            ff_obj_list.append(force_obj())
-
+        chains = EllipsoidChain(
+                lengths=job.sp.lengths,
+                num_mols=job.sp.num_mols,
+                lpar=job.sp.lpar,
+                bead_mass=job.sp.bead_mass,
+                bond_length=0.001,
+        )
         system = Pack(
-<<<<<<<< HEAD:flow-templates/hoomd-organics/project.py
-                    molecules=mol_obj_list,
-                    density=job.sp.density,
-                    r_cut=job.sp.r_cut,
-                    auto_scale=True,
-                    force_field=ff()
-                    remove_hydrogens=job.sp.remove_hydrogens,
-                    remove_charges=job.sp.remove_charges
-                    scale_charges=True,
-                ) 
-|||||||| 63276aa:flow-templates/hoomd-polymers/project.py
-                    molecules=mol_obj_list,
-                    density=job.sp.density,
-                    r_cut=job.sp.r_cut,
-                    auto_scale=True,
-                    remove_hydrogens=job.sp.remove_hydrogens,
-                    remove_charges=job.sp.remove_charges
-                ) 
-========
-                molecules=mol_obj_list, density=job.sp.density,
+                molecules=chains,
+                density=job.sp.density,
+                fix_orientation=True,
+                base_units = {
+                    "mass": job.sp.bead_mass * Unit("amu"),
+                    "length": job.sp.lpar * Unit("nm"),
+                    "energy": job.sp.epsilon * Unit("kJ/mol")
+                }
+        )
+        rigid_frame, rigid = create_rigid_body(
+                system.hoomd_snapshot,
+                chains.bead_constituents_types
         )
 
-        system.apply_forcefield(
-                force_field=ff_obj_list,
+        ellipsoid_ff = EllipsoidForcefield(
+                epsilon=job.sp.epsilon,
+                lperp=job.sp.lperp,
+                lpar=job.sp.lpar,
                 r_cut=job.sp.r_cut,
-                auto_scale=job.sp.auto_scale,
-                scale_charges=True,
-                remove_charges=job.sp.remove_charges,
-                remove_hydrogens=job.sp.remove_hydrogens,
-                pppm_resolution=job.sp.pppm_resolution,
-                pppm_order=job.sp.pppm_order
+                bond_k=job.sp.bond_k,
+                bond_r0=job.sp.r0,
+                angle_k=job.sp.theta_k,
+                angle_theta0=job.sp.theta0
         )
->>>>>>>> 92d5ec22227613933d701fa818ca23fd5b66f27e:flow-templates/flowermd/project.py
 
-        gsd_path = job.fn("trajectory.gsd")
-        log_path = job.fn("log.txt")
-
-        sim = Simulation.from_system(
-                system=system,
+        sim = Simulation(
+                initial_state=rigid_frame,
+                forcefield=ellipsoid_ff.hoomd_forces,
+                rigid_constraint=rigid,
+                r_cut=job.sp.r_cut,
                 dt=job.sp.dt,
+                seed=job.sp.seed,
+                reference_values=system.reference_values,
                 gsd_write_freq=job.sp.gsd_write_freq,
-                gsd_file_name=gsd_path,
                 log_write_freq=job.sp.log_write_freq,
-                log_file_name=log_path,
+                gsd_file_name=job.fn("trajectory.gsd"),
+                log_file_name=job.fn("data.txt"),
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
         # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
-        job.doc.ref_mass = sim.reference_mass.to("amu").value()
+        job.doc.ref_mass = sim.reference_mass.to("amu").value
         job.doc.ref_mass_units = "amu"
-        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value()
+        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value
         job.doc.ref_energy_units = "kJ/mol"
-        job.doc.ref_length = sim.reference_length.to("nm").value()
+        job.doc.ref_length = sim.reference_length.to("nm").value
         job.doc.ref_length_units = "nm"
-        job.doc.real_time_step = sim.real_timestep.to("fs").value()
+        job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
-        shrink_kT_ramp = sim.kT_ramp(
+        shrink_kT_ramp = sim.temperature_ramp(
                 n_steps=job.sp.shrink_n_steps,
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
@@ -182,7 +159,6 @@ def run_nvt(job):
         sim.save_restart_gsd(job.fn("restart.gsd"))
         job.doc.nvt_done = True
         print("Simulation finished.")
-
 
 @MyProject.pre(nvt_done)
 @MyProject.post(sample_done)
