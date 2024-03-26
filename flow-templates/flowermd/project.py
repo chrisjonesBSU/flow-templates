@@ -28,19 +28,6 @@ class Borah(DefaultSlurmEnvironment):
         )
 
 
-class R2(DefaultSlurmEnvironment):
-    hostname_pattern = "r2"
-    template = "r2.sh"
-
-    @classmethod
-    def add_args(cls, parser):
-        parser.add_argument(
-            "--partition",
-            default="shortgpuq",
-            help="Specify the partition to submit to."
-        )
-
-
 class Fry(DefaultSlurmEnvironment):
     hostname_pattern = "fry"
     template = "fry.sh"
@@ -68,22 +55,13 @@ def sample_done(job):
 @MyProject.operation(
         directives={"ngpu": 1, "executable": "python -u"}, name="nvt"
 )
-<<<<<<<< HEAD:flow-templates/hoomd-organics/project.py
-def run_sim(job):
-    import hoomd_organics 
-    from hoomd_organics.base.system import Pack
-    from hoomd_organics.base.simulation import Simulaton 
-|||||||| 63276aa:flow-templates/hoomd-polymers/project.py
-def run_sim(job):
-    import hoomd_polymers
-    from hoomd_polymers.base.system import Pack
-    from hoomd_polymers.base.simulation import Simulaton 
-========
 def run_nvt(job):
+    import unyt as u
+    from unyt import Unit
     import flowermd
     from flowermd.base.system import Pack
     from flowermd.base.simulation import Simulaton
->>>>>>>> 92d5ec22227613933d701fa818ca23fd5b66f27e:flow-templates/flowermd/project.py
+
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
@@ -97,35 +75,14 @@ def run_nvt(job):
                     )
             mol_obj_list.append(mol_obj)
         
-        ff = getattr(hoomd_polymers.library.forcefields, job.sp.forcefield)
+        ff = getattr(flowermd.library.forcefields, job.sp.forcefield)
 
         ff_obj_list = []
         for ff in job.sp.forcefields:
             force_obj = getattr(flowermd.library.forcefields, ff)
             ff_obj_list.append(force_obj())
 
-        system = Pack(
-<<<<<<<< HEAD:flow-templates/hoomd-organics/project.py
-                    molecules=mol_obj_list,
-                    density=job.sp.density,
-                    r_cut=job.sp.r_cut,
-                    auto_scale=True,
-                    force_field=ff()
-                    remove_hydrogens=job.sp.remove_hydrogens,
-                    remove_charges=job.sp.remove_charges
-                    scale_charges=True,
-                ) 
-|||||||| 63276aa:flow-templates/hoomd-polymers/project.py
-                    molecules=mol_obj_list,
-                    density=job.sp.density,
-                    r_cut=job.sp.r_cut,
-                    auto_scale=True,
-                    remove_hydrogens=job.sp.remove_hydrogens,
-                    remove_charges=job.sp.remove_charges
-                ) 
-========
-                molecules=mol_obj_list, density=job.sp.density,
-        )
+        system = Pack(molecules=mol_obj_list, density=job.sp.density) 
 
         system.apply_forcefield(
                 force_field=ff_obj_list,
@@ -137,7 +94,6 @@ def run_nvt(job):
                 pppm_resolution=job.sp.pppm_resolution,
                 pppm_order=job.sp.pppm_order
         )
->>>>>>>> 92d5ec22227613933d701fa818ca23fd5b66f27e:flow-templates/flowermd/project.py
 
         gsd_path = job.fn("trajectory.gsd")
         log_path = job.fn("log.txt")
@@ -151,6 +107,7 @@ def run_nvt(job):
                 log_file_name=log_path,
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
+        sim.save_restart_gsd(job.fn("init.gsd"))
         # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
@@ -169,8 +126,12 @@ def run_nvt(job):
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
         )
+        target_box = get_target_box_mass_density(
+                mass=system.mass.to("g"),
+                density=job.sp.density * (Unit("g/cm**3"))
+        )
         sim.run_update_volume(
-                final_density=job.sp.density,
+                final_box_lengths=target_box,
                 n_steps=job.sp.shrink_n_steps,
                 period=job.sp.shrink_period,
                 tau_kt=tau_kT,
@@ -187,7 +148,7 @@ def run_nvt(job):
 @MyProject.pre(nvt_done)
 @MyProject.post(sample_done)
 @MyProject.operation(
-        directives={"ngpu": 1, "executable": "python -u"}, name="sample"
+        directives={"ngpu": 0, "executable": "python -u"}, name="sample"
 )
 def sample(job):
     # Add package imports here
