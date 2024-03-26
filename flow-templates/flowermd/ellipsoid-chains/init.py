@@ -22,21 +22,24 @@ def get_parameters():
     ''''''
     parameters = OrderedDict()
     # Beads and system:
-    parameters["num_mols"] = [30]
-    parameters["lengths"] = [15]
-    parameters["density"] = [1.2]
-    parameters["auto_scale"] = [True]
-    parameters["bead_mass"] = [200] # amu
+    parameters["num_mols"] = [[30]]
+    parameters["lengths"] = [[15]]
+    parameters["density"] = [0.8] # number density
+    parameters["bead_mass"] = [1] 
+
     # GB Params
-    parameters["lpar"] = [0.5] # nm
-    parameters["lperp"] = [0.25] # nm
+    parameters["lpar"] = [1] # nm
+    parameters["lperp"] = [0.5] # nm
     parameters["epsilon"] = [1.0] # kJ/mol
+
     # Bonds
     parameters["r0"] = [0.01]
     parameters["bond_k"] = [500]
+
     # Angles
     parameters["theta0"] = [2.5]
     parameters["theta_k"] = [100]
+
     # Define some simulation related parameters:
     parameters["kT"] = [1.0]
     parameters["n_steps"] = [5e5]

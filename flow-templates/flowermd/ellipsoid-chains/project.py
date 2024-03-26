@@ -28,19 +28,6 @@ class Borah(DefaultSlurmEnvironment):
         )
 
 
-class R2(DefaultSlurmEnvironment):
-    hostname_pattern = "r2"
-    template = "r2.sh"
-
-    @classmethod
-    def add_args(cls, parser):
-        parser.add_argument(
-            "--partition",
-            default="shortgpuq",
-            help="Specify the partition to submit to."
-        )
-
-
 class Fry(DefaultSlurmEnvironment):
     hostname_pattern = "fry"
     template = "fry.sh"
@@ -77,6 +64,7 @@ def run_nvt(job):
     from flowermd.library.polymers import EllipsoidChain
     from flowermd.library.forcefields import EllipsoidForcefield
     from flowermd.utils.rigid_body import create_rigid_body
+    from flowermd.utils import get_target_box_number_density
 
     with job:
         print("JOB ID NUMBER:")
@@ -91,7 +79,7 @@ def run_nvt(job):
         )
         system = Pack(
                 molecules=chains,
-                density=job.sp.density,
+                density=job.sp.density * (1/u.Unit("cm**3")),
                 fix_orientation=True,
                 base_units = {
                     "mass": job.sp.bead_mass * Unit("amu"),
@@ -129,6 +117,7 @@ def run_nvt(job):
                 log_file_name=job.fn("data.txt"),
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
+        sim.save_restart_gsd(job.fn("init.gsd"))
         # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
@@ -140,6 +129,10 @@ def run_nvt(job):
         job.doc.ref_length_units = "nm"
         job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
+        n_beads = 0
+        for n, l in zip(job.sp.lengths, job.sp.num_mols):
+            n_beads += (n * l)
+        job.doc.n_beads = int(n_beads)
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
         shrink_kT_ramp = sim.temperature_ramp(
@@ -147,8 +140,15 @@ def run_nvt(job):
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
         )
+        
+        sigma = 1 * Unit("nm")
+        density = job.sp.density / (sigma**3)
+        target_box = get_target_box_number_density(
+                density=density,
+                n_beads=job.doc.n_beads
+        ) 
         sim.run_update_volume(
-                final_density=job.sp.density,
+                final_box_lengths=target_box,
                 n_steps=job.sp.shrink_n_steps,
                 period=job.sp.shrink_period,
                 tau_kt=tau_kT,
@@ -164,7 +164,7 @@ def run_nvt(job):
 @MyProject.pre(nvt_done)
 @MyProject.post(sample_done)
 @MyProject.operation(
-        directives={"ngpu": 1, "executable": "python -u"}, name="sample"
+        directives={"ngpu": 0, "executable": "python -u"}, name="sample"
 )
 def sample(job):
     # Add package imports here
