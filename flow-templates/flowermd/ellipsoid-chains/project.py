@@ -107,7 +107,6 @@ def run_nvt(job):
                 initial_state=rigid_frame,
                 forcefield=ellipsoid_ff.hoomd_forces,
                 rigid_constraint=rigid,
-                r_cut=job.sp.r_cut,
                 dt=job.sp.dt,
                 seed=job.sp.seed,
                 reference_values=system.reference_values,
@@ -140,13 +139,13 @@ def run_nvt(job):
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
         )
-        
+
         sigma = 1 * Unit("nm")
         density = job.sp.density / (sigma**3)
         target_box = get_target_box_number_density(
                 density=density,
                 n_beads=job.doc.n_beads
-        ) 
+        )
         sim.run_update_volume(
                 final_box_lengths=target_box,
                 n_steps=job.sp.shrink_n_steps,
@@ -177,4 +176,4 @@ def sample(job):
 
 
 if __name__ == "__main__":
-    MyProject().main()
+    MyProject(environment=Borah).main()
