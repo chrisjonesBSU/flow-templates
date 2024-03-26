@@ -71,6 +71,7 @@ def sample_done(job):
 def run_nvt(job):
     import unyt as u
     from unyt import Unit
+
     import flowermd
     from flowermd.base import Pack, Simulation
     from flowermd.library.polymers import EllipsoidChain
