@@ -79,7 +79,7 @@ def run_nvt(job):
         )
         system = Pack(
                 molecules=chains,
-                density=job.sp.density * (1/u.Unit("cm**3")),
+                density=job.sp.density * (1/u.Unit("nm**3")),
                 fix_orientation=True,
                 base_units = {
                     "mass": job.sp.bead_mass * Unit("amu"),
@@ -146,6 +146,8 @@ def run_nvt(job):
                 density=density,
                 n_beads=job.doc.n_beads
         )
+        print(target_box)
+        job.doc.target_box = target_box
         sim.run_update_volume(
                 final_box_lengths=target_box,
                 n_steps=job.sp.shrink_n_steps,
