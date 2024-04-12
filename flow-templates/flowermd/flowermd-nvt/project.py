@@ -60,32 +60,20 @@ def run_nvt(job):
     from unyt import Unit
     import flowermd
     from flowermd.base.system import Pack
-    from flowermd.base.simulation import Simulaton
+    from flowermd.base.simulation import Simulation
+    from flowermd.library import PolyEthylene, OPLS_AA
+    from flowermd.utils import get_target_box_mass_density
 
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
         print("------------------------------------")
-        mol_obj_list = []
-        for m in job.sp.molecules:
-            mol_cls = getattr(flowermd.library.polymers, job.sp.molecule)
-            mol_obj = mol_cls(
-                        num_mols=job.sp.num_mols,
-                        lengths=job.sp.lengths,
-                    )
-            mol_obj_list.append(mol_obj)
-        
-        ff = getattr(flowermd.library.forcefields, job.sp.forcefield)
-
-        ff_obj_list = []
-        for ff in job.sp.forcefields:
-            force_obj = getattr(flowermd.library.forcefields, ff)
-            ff_obj_list.append(force_obj())
-
-        system = Pack(molecules=mol_obj_list, density=job.sp.density) 
+    
+        molecules = PolyEthylene(lengths=job.sp.lengths, num_mols=job.sp.num_mols)
+        system = Pack(molecules=molecules, density=job.sp.density) 
 
         system.apply_forcefield(
-                force_field=ff_obj_list,
+                force_field=OPLS_AA(),
                 r_cut=job.sp.r_cut,
                 auto_scale=job.sp.auto_scale,
                 scale_charges=True,
@@ -111,17 +99,17 @@ def run_nvt(job):
         # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
-        job.doc.ref_mass = sim.reference_mass.to("amu").value()
+        job.doc.ref_mass = sim.reference_mass.to("amu").value
         job.doc.ref_mass_units = "amu"
-        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value()
+        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value
         job.doc.ref_energy_units = "kJ/mol"
-        job.doc.ref_length = sim.reference_length.to("nm").value()
+        job.doc.ref_length = sim.reference_length.to("nm").value
         job.doc.ref_length_units = "nm"
-        job.doc.real_time_step = sim.real_timestep.to("fs").value()
+        job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
-        shrink_kT_ramp = sim.kT_ramp(
+        shrink_kT_ramp = sim.temperature_ramp(
                 n_steps=job.sp.shrink_n_steps,
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
@@ -161,4 +149,4 @@ def sample(job):
 
 
 if __name__ == "__main__":
-    MyProject().main()
+    MyProject(environment=Fry).main()

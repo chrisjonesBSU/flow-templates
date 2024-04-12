@@ -24,7 +24,6 @@ def get_parameters():
 
     # Define parameters here
     # Example:
-    parameters["molecule"] = ["PPS"]
     parameters["num_molecules"] = [20]
     parameters["kT"] = [1.4]
     parameters["n_steps"] = [5e6]
