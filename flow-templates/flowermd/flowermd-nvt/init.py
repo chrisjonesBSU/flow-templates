@@ -22,8 +22,6 @@ def get_parameters():
     ''''''
     parameters = OrderedDict()
     # Define some system related parameters:
-    parameters["molecule"] = ["PPS"]
-    parameters["forcefield"] = ["OPLS_AA_PPS"]
     parameters["num_mols"] = [20]
     parameters["lengths"] = [15]
     parameters["density"] = [1.2]

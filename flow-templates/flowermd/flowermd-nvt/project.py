@@ -28,19 +28,6 @@ class Borah(DefaultSlurmEnvironment):
         )
 
 
-class R2(DefaultSlurmEnvironment):
-    hostname_pattern = "r2"
-    template = "r2.sh"
-
-    @classmethod
-    def add_args(cls, parser):
-        parser.add_argument(
-            "--partition",
-            default="shortgpuq",
-            help="Specify the partition to submit to."
-        )
-
-
 class Fry(DefaultSlurmEnvironment):
     hostname_pattern = "fry"
     template = "fry.sh"
@@ -69,34 +56,24 @@ def sample_done(job):
         directives={"ngpu": 1, "executable": "python -u"}, name="nvt"
 )
 def run_nvt(job):
+    import unyt as u
+    from unyt import Unit
     import flowermd
     from flowermd.base.system import Pack
-    from flowermd.base.simulation import Simulaton
+    from flowermd.base.simulation import Simulation
+    from flowermd.library import PolyEthylene, OPLS_AA
+    from flowermd.utils import get_target_box_mass_density
+
     with job:
         print("JOB ID NUMBER:")
         print(job.id)
         print("------------------------------------")
-        mol_obj_list = []
-        for m in job.sp.molecules:
-            mol_cls = getattr(flowermd.library.polymers, job.sp.molecule)
-            mol_obj = mol_cls(
-                        num_mols=job.sp.num_mols,
-                        lengths=job.sp.lengths,
-                        force_field=job.sp.forcefield
-                    )
-            mol_obj_list.append(mol_obj)
-
-        ff_obj_list = []
-        for ff in job.sp.forcefields:
-            force_obj = getattr(flowermd.library.forcefields, ff)
-            ff_obj_list.append(force_obj())
-
-        system = Pack(
-                molecules=mol_obj_list, density=job.sp.density,
-        )
+    
+        molecules = PolyEthylene(lengths=job.sp.lengths, num_mols=job.sp.num_mols)
+        system = Pack(molecules=molecules, density=job.sp.density) 
 
         system.apply_forcefield(
-                force_field=ff_obj_list,
+                force_field=OPLS_AA(),
                 r_cut=job.sp.r_cut,
                 auto_scale=job.sp.auto_scale,
                 scale_charges=True,
@@ -118,26 +95,31 @@ def run_nvt(job):
                 log_file_name=log_path,
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
+        sim.save_restart_gsd(job.fn("init.gsd"))
         # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
-        job.doc.ref_mass = sim.reference_mass.to("amu").value()
+        job.doc.ref_mass = sim.reference_mass.to("amu").value
         job.doc.ref_mass_units = "amu"
-        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value()
+        job.doc.ref_energy = sim.reference_energy.to("kJ/mol").value
         job.doc.ref_energy_units = "kJ/mol"
-        job.doc.ref_length = sim.reference_length.to("nm").value()
+        job.doc.ref_length = sim.reference_length.to("nm").value
         job.doc.ref_length_units = "nm"
-        job.doc.real_time_step = sim.real_timestep.to("fs").value()
+        job.doc.real_time_step = sim.real_timestep.to("fs").value
         job.doc.real_time_units = "fs"
         # Set up stuff for shrinking volume step
         print("Running shrink step.")
-        shrink_kT_ramp = sim.kT_ramp(
+        shrink_kT_ramp = sim.temperature_ramp(
                 n_steps=job.sp.shrink_n_steps,
                 kT_start=job.sp.shrink_kT,
                 kT_final=job.sp.kT
         )
+        target_box = get_target_box_mass_density(
+                mass=system.mass.to("g"),
+                density=job.sp.density * (Unit("g/cm**3"))
+        )
         sim.run_update_volume(
-                final_density=job.sp.density,
+                final_box_lengths=target_box,
                 n_steps=job.sp.shrink_n_steps,
                 period=job.sp.shrink_period,
                 tau_kt=tau_kT,
@@ -154,7 +136,7 @@ def run_nvt(job):
 @MyProject.pre(nvt_done)
 @MyProject.post(sample_done)
 @MyProject.operation(
-        directives={"ngpu": 1, "executable": "python -u"}, name="sample"
+        directives={"ngpu": 0, "executable": "python -u"}, name="sample"
 )
 def sample(job):
     # Add package imports here
@@ -167,4 +149,4 @@ def sample(job):
 
 
 if __name__ == "__main__":
-    MyProject().main()
+    MyProject(environment=Fry).main()

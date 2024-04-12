@@ -28,19 +28,6 @@ class Borah(DefaultSlurmEnvironment):
         )
 
 
-class R2(DefaultSlurmEnvironment):
-    hostname_pattern = "r2"
-    template = "r2.sh"
-
-    @classmethod
-    def add_args(cls, parser):
-        parser.add_argument(
-            "--partition",
-            default="shortgpuq",
-            help="Specify the partition to submit to."
-        )
-
-
 class Fry(DefaultSlurmEnvironment):
     hostname_pattern = "fry"
     template = "fry.sh"
@@ -94,7 +81,7 @@ def run_simulation(job):
 @MyProject.pre(sim_done)
 @MyProject.post(sample_done)
 @MyProject.operation(
-        directives={"ngpu": 1, "executable": "python -u"}, name="sample"
+        directives={"ngpu": 0, "executable": "python -u"}, name="sample"
 )
 def sample(job):
     # Add package imports here
