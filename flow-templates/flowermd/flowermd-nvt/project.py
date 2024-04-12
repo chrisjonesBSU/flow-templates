@@ -42,8 +42,8 @@ class Fry(DefaultSlurmEnvironment):
 
 # Definition of project-related labels (classification)
 @MyProject.label
-def nvt_done(job):
-    return job.doc.nvt_done
+def seed_done(job):
+    return job.isfile("seed-restart.gsd")
 
 
 @MyProject.label
@@ -51,17 +51,48 @@ def sample_done(job):
     return job.doc.sample_done
 
 
-@MyProject.post(nvt_done)
+@MyProject.label
+def seed_system(job):
+    return job.sp.n_duplicates is None
+
+
+@MyProject.label
+def not_seed_system(job):
+    return job.sp.n_duplicates is not None
+
+def duplicate_seed(job):
+    from flowermd.modules.welding import Interface
+    n_dups = 0
+    while n_dups != job.sp.n_duplicates:
+        for i, axis in enumerate([(1,0,0), (0,1,0), (0,0,1)]):
+            if n_dups == job.sp.n_duplicates:
+                break
+            dup = Interface(
+                    gsd_files=[job.fn("seed-restart.gsd")],
+                    interface_axis=axis,
+                    gap=8,
+                    remove_void_particles=False
+            )
+            with gsd.hoomd.open(job.fn("seed-restart.gsd"), "w") as traj:
+                traj.append(dup.hoomd_snapshot)
+            n_dups += 1
+
+    with gsd.hoomd.open(job.fn("seed-restart.gsd"), "r") as traj:
+        job.doc.N = traj[0].particles.N
+
+
+@MyProject.pre(seed_system)
+@MyProject.post(seed_done)
 @MyProject.operation(
         directives={"ngpu": 1, "executable": "python -u"}, name="nvt"
 )
-def run_nvt(job):
+def make_seed(job):
     import unyt as u
     from unyt import Unit
     import flowermd
     from flowermd.base.system import Pack
     from flowermd.base.simulation import Simulation
-    from flowermd.library import PolyEthylene, OPLS_AA
+    from flowermd.library import PEKK_Para, GAFF 
     from flowermd.utils import get_target_box_mass_density
 
     with job:
@@ -69,7 +100,7 @@ def run_nvt(job):
         print(job.id)
         print("------------------------------------")
     
-        molecules = PolyEthylene(lengths=job.sp.lengths, num_mols=job.sp.num_mols)
+        molecules = PEKK_Para(lengths=job.sp.lengths, num_mols=job.sp.num_mols)
         system = Pack(molecules=molecules, density=job.sp.density) 
 
         system.apply_forcefield(
@@ -83,8 +114,8 @@ def run_nvt(job):
                 pppm_order=job.sp.pppm_order
         )
 
-        gsd_path = job.fn("trajectory.gsd")
-        log_path = job.fn("log.txt")
+        gsd_path = job.fn("seed.gsd")
+        log_path = job.fn("seed-log.txt")
 
         sim = Simulation.from_system(
                 system=system,
@@ -95,7 +126,6 @@ def run_nvt(job):
                 log_file_name=log_path,
         )
         sim.pickle_forcefield(job.fn("forcefield.pickle"))
-        sim.save_restart_gsd(job.fn("init.gsd"))
         # Store unit information in job doc
         tau_kT = sim.dt * job.sp.tau_kT
         job.doc.tau_kT = tau_kT
@@ -116,7 +146,7 @@ def run_nvt(job):
         )
         target_box = get_target_box_mass_density(
                 mass=system.mass.to("g"),
-                density=job.sp.density * (Unit("g/cm**3"))
+                density=job.sp.density * (Unit("g/cm**3") / 2)
         )
         sim.run_update_volume(
                 final_box_lengths=target_box,
@@ -127,10 +157,11 @@ def run_nvt(job):
         )
         print("Shrink step finished.")
         print("Running simulation.")
-        sim.run_NVT(kT=job.sp.kT, n_steps=job.sp.n_steps, tau_kt=tau_kT)
-        sim.save_restart_gsd(job.fn("restart.gsd"))
-        job.doc.nvt_done = True
-        print("Simulation finished.")
+        sim.run_NVT(kT=6.0, n_steps=2e6, tau_kt=tau_kT)
+        sim.save_restart_gsd(job.fn("seed-restart.gsd"))
+        print("Seed simulation finished.")
+        duplicate_seed(job)
+        print("Seed duplication finished.")
 
 
 @MyProject.pre(nvt_done)

@@ -23,13 +23,13 @@ def get_parameters():
     parameters = OrderedDict()
     # Define some system related parameters:
     parameters["num_mols"] = [20]
-    parameters["lengths"] = [15]
+    parameters["n_duplicates"] = [None, 2, 4, 6]
+    parameters["lengths"] = [20]
     parameters["density"] = [1.2]
-    parameters["remove_hydrogens"] = [True]
-    parameters["remove_charges"] = [True]
+    parameters["remove_hydrogens"] = [False]
+    parameters["remove_charges"] = [False]
     parameters["pppm_resolution"] = [(16, 16, 16)]
     parameters["pppm_order"] = [4]
-    parameters["remove_charges"] = [True]
     parameters["auto_scale"] = [True]
     # Define some simulation related parameters:
     parameters["kT"] = [3.0]
