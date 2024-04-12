@@ -22,10 +22,10 @@ def get_parameters():
     ''''''
     parameters = OrderedDict()
     # Beads and system:
-    parameters["num_mols"] = [[30]]
-    parameters["lengths"] = [[15]]
-    parameters["density"] = [0.8] # number density
-    parameters["bead_mass"] = [1] 
+    parameters["num_mols"] = [[1]]
+    parameters["lengths"] = [[25]]
+    parameters["density"] = [0.01] # number density
+    parameters["bead_mass"] = [1]
 
     # GB Params
     parameters["lpar"] = [1] # nm
@@ -37,20 +37,20 @@ def get_parameters():
     parameters["bond_k"] = [500]
 
     # Angles
-    parameters["theta0"] = [2.5]
-    parameters["theta_k"] = [100]
+    parameters["theta0"] = [2.8]
+    parameters["theta_k"] = [200]
 
     # Define some simulation related parameters:
-    parameters["kT"] = [1.0]
-    parameters["n_steps"] = [5e5]
-    parameters["shrink_kT"] = [8.0]
-    parameters["shrink_n_steps"] = [5e5]
+    parameters["kT"] = [0.5]
+    parameters["n_steps"] = [1e7]
+    parameters["shrink_kT"] = [4.0]
+    parameters["shrink_n_steps"] = [1e6]
     parameters["shrink_period"] = [10000]
-    parameters["r_cut"] = [2.0]
+    parameters["r_cut"] = [2.5]
     parameters["dt"] = [0.0005]
     parameters["tau_kT"] = [100] # Used as a multiple of dt
-    parameters["gsd_write_freq"] = [1e5]
-    parameters["log_write_freq"] = [1e4]
+    parameters["gsd_write_freq"] = [2e4]
+    parameters["log_write_freq"] = [2e3]
     parameters["seed"] = [24]
     return list(parameters.keys()), list(product(*parameters.values()))
 

@@ -1,1 +1,0 @@
-../../../cluster-sh-templates/script.sh

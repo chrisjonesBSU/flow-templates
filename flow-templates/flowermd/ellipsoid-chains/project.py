@@ -58,9 +58,11 @@ def sample_done(job):
 def run_nvt(job):
     import unyt as u
     from unyt import Unit
+    import cmeutils
+    from cmeutils.gsd_utils import ellipsoid_gsd
 
     import flowermd
-    from flowermd.base import Pack, Simulation
+    from flowermd.base import Pack, Lattice, Simulation
     from flowermd.library.polymers import EllipsoidChain
     from flowermd.library.forcefields import EllipsoidForcefield
     from flowermd.utils.rigid_body import create_rigid_body
@@ -77,6 +79,17 @@ def run_nvt(job):
                 bead_mass=job.sp.bead_mass,
                 bond_length=0.001,
         )
+        #system = Lattice(
+        #        molecules=chains,
+        #        n=8,
+        #        y=1.2,
+        #        x=1.2,
+        #        base_units = {
+        #            "mass": job.sp.bead_mass * Unit("amu"),
+        #            "length": job.sp.lpar * Unit("nm"),
+        #            "energy": job.sp.epsilon * Unit("kJ/mol")
+        #        }
+        #)
         system = Pack(
                 molecules=chains,
                 density=job.sp.density * (1/u.Unit("nm**3")),
@@ -148,19 +161,27 @@ def run_nvt(job):
         )
         print(target_box)
         job.doc.target_box = target_box
-        sim.run_update_volume(
-                final_box_lengths=target_box,
-                n_steps=job.sp.shrink_n_steps,
-                period=job.sp.shrink_period,
-                tau_kt=tau_kT,
-                kT=shrink_kT_ramp
-        )
+        #sim.run_update_volume(
+        #        final_box_lengths=target_box,
+        #        n_steps=job.sp.shrink_n_steps,
+        #        period=job.sp.shrink_period,
+        #        tau_kt=tau_kT,
+        #        kT=shrink_kT_ramp
+        #)
         print("Shrink step finished.")
         print("Running simulation.")
         sim.run_NVT(kT=job.sp.kT, n_steps=job.sp.n_steps, tau_kt=tau_kT)
         sim.save_restart_gsd(job.fn("restart.gsd"))
+        sim.flush_writers()
         job.doc.nvt_done = True
         print("Simulation finished.")
+        ellipsoid_gsd(
+                job.fn("trajectory.gsd"),
+                job.fn("ellipsoid-trajectory.gsd"),
+                lpar=job.sp.lpar,
+                lperp=job.sp.lperp,
+        )
+
 
 @MyProject.pre(nvt_done)
 @MyProject.post(sample_done)
@@ -178,4 +199,4 @@ def sample(job):
 
 
 if __name__ == "__main__":
-    MyProject(environment=Borah).main()
+    MyProject(environment=Fry).main()
